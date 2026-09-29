@@ -30,8 +30,8 @@ Supabase
 |---|---|---|
 | 1 | Repo on GitHub, Supabase project, run migrations + seed. Deploy `web/index.html` as the clickable demo. | Leadership demo link works |
 | 2 | Supabase Auth with magic-link (pilot) → SAML SSO. Replace demo data in `web/` with `supabase-js` calls: `v_trainee_status`, `start_attempt`, `submit_attempt`. | A seeded trainee logs in and sees their own journey only |
-| 3 | Trainee screens: journey strip, today's items (files from Storage), mark complete, assessment runner with timer. | Gate 1 can be taken end to end |
-| 4 | Coach screens: `v_my_coaching_queue`, `record_coaching`, remediation. HR screens: escalations, outbox log, risk list. | Fail → 3 emails → 3 decisions → unlock/repeat works live |
+| 3 | Trainee screens: journey strip, today's items (files from Storage), mark complete. **Secure assessment runner**: honour declaration, `serve_question` / `answer_question` one at a time, server timer, event capture (`log_attempt_event`), full screen. | Gate 1 can be taken end to end; refresh, back and second tab are all refused |
+| 4 | Coach screens: `v_my_coaching_queue`, `record_coaching`, remediation, **verification viva** (`v_my_integrity_reviews`, `verify_attempt`). HR screens: escalations, integrity dashboard, outbox log, risk list. | Fail → 3 emails → 3 decisions → unlock/repeat works live; held pass → viva → confirm/void |
 | 5 | Shadow log (Days 22–29) with masked client reference + mentor rating; Day-30 sign-off with `sign_off`. | A trainee reaches Certified |
 | 6 | Leadership dashboard from `v_programme_kpis`; ROI model with the bank's real numbers; CSV export for HRMS. | Head of CB signs off the business case |
 
@@ -48,9 +48,9 @@ Supabase
 
 ## Weeks 7–10 — pilot and scale
 
-7. Security review: RLS tests per role, VAPT, DPDP data-flow note, audit-log retention (align with bank policy).
+7. Security review: RLS tests per role, VAPT, DPDP data-flow note, audit-log retention (align with bank policy). **Test integrity set-up**: Safe Exam Browser / MDM kiosk profile on bank laptops, test-room network blocks public AI endpoints, sitting windows per region, L&D rewrites 40% of questions as bank-specific scenarios.
 8. Pilot wave: 50 trainees, 4 mentors, 4 managers, 1 HR partner. Daily stand-up on issues.
-9. Fix, tune question bank (item analysis: drop questions everyone gets right/wrong), calibrate pass marks.
+9. Fix, tune question bank (item analysis: drop questions everyone gets right/wrong), calibrate pass marks and **integrity weights** (target: under 3% of results held, and most held results confirmed).
 10. Scale to waves of 250 per month. Leadership readout: Gate pass rates, coaching load, early attrition vs last year's cohort.
 
 ## GitHub workflow

@@ -10,7 +10,9 @@ const moduleByFolder = { "01-governance": "GOV", "02-people": "PPL", "03-product
 async function* walk(dir) {
   for (const e of await readdir(dir, { withFileTypes: true })) {
     const p = join(dir, e.name);
-    if (e.isDirectory()) yield* walk(p); else if (p.endsWith(".md")) yield p;
+    // never index the question bank: the assistant must not be able to leak test content
+    if (e.isDirectory()) { if (e.name !== "assessments") yield* walk(p); }
+    else if (p.endsWith(".md")) yield p;
   }
 }
 

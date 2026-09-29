@@ -18,7 +18,7 @@ Sized for one intake of **1,000 new RMs, 20 mentors, 20 reporting managers and 5
 | 22–29 | Live customer shadowing with mentor | |
 | **30** | **Certification assessment + tri-party sign-off** | ≥ 80% and Mentor + Manager + HR approve |
 
-Guardrail added: two attempts per gate; a second miss goes to an HR performance review.
+Guardrails added: two attempts per gate (a second miss goes to an HR performance review), and an **assessment-integrity layer** so AI tools or shared answers cannot inflate a score. See `docs/ASSESSMENT_INTEGRITY.md`.
 
 ## What's in the repo
 
@@ -29,8 +29,9 @@ supabase/
     ..._gating_engine.sql   start_attempt, submit_attempt, handle_gate_outcome, record_coaching, sign_off, risk score
     ..._rls_views_cron.sql  row-level security per role, dashboard views, cron schedule
     ..._chatbot_sla.sql     vector search for the assistant, SLA breach detection
+    ..._assessment_integrity.sql  one-question-at-a-time delivery, server timers, integrity score, verification viva
   seed.sql                  phases, 7 modules, 38 learning items, 3 assessments, 1,000/20/20/5 org
-  seed_questions.sql        generated from content/assessments/question-bank.json
+  seed_questions.sql        generated: 58 bank questions + 40 personalised calculation variants
   functions/
     notify-dispatch/        sends queued emails (Resend; swap for MS Graph/SMTP)
     chatbot/                RAG assistant (Claude or any OpenAI-compatible model, incl. on-prem Llama)
@@ -59,7 +60,7 @@ Then:
 ```bash
 python3 scripts/build_question_seed.py   # regenerates seed_questions.sql after you edit the question bank
 supabase start                           # local Postgres, Auth, Studio at http://localhost:54323
-supabase db reset                        # runs migrations + seeds (1,045 people, 58 questions)
+supabase db reset                        # runs migrations + seeds (1,046 people, 98 questions)
 cp .env.example supabase/functions/.env  # fill keys
 supabase functions serve --env-file supabase/functions/.env
 node scripts/ingest-kb.mjs               # loads /content into the assistant's knowledge base
@@ -80,4 +81,6 @@ See **docs/BUILD_PATHWAY.md** for the full 10-week plan.
 
 ## Tested
 
-The gating engine was run end to end on Postgres 16: fail Gate 1 → three coaching sessions + emails queued → HR requests repeat → remediation → retake passes → Gate 2 → Final → three sign-offs → certified; coach-pass path; Gate 2 escalates to two coaches only; blocked when mandatory learning is open.
+The gating engine was run end to end on Postgres 16: fail Gate 1 → three coaching sessions + emails queued → HR requests repeat → remediation → retake passes → Gate 2 → Final → three sign-offs → certified; coach-pass path; Gate 2 escalates to two coaches only; blocked when mandatory learning is open; mentor cannot sign off without a Day-30 viva.
+
+Integrity suite: serving before the honour declaration, a second session, going back and late answers are all refused; leaving the screen + paste holds a 90% pass for review; mentor voids it; re-sit is refused until a supervised window opens, then passes without using an attempt; a clean candidate passes straight through. Run it with the CI workflow or `psql -f supabase/tests/gating_test.sql`.

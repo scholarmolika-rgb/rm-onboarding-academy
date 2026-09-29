@@ -72,6 +72,35 @@ export const templates: Record<string, (p: P) => { subject: string; html: string
     html: shell("Coaching overdue", `<p>Coaching decisions for <b>${p.trainee}</b> are past SLA.
       Pending: ${(p.pending ?? []).join(", ")}.</p>${btn(`${APP}/hr/escalations`, "View escalations")}`),
   }),
+  integrity_review_required: (p) => ({
+    subject: `Verification needed: ${p.trainee} (${p.employee_code})`,
+    html: shell("Please verify an assessment result", `<p><b>${p.trainee}</b> passed the
+      <b>${p.assessment}</b>, but the attempt showed unusual activity:
+      ${Object.entries(p.flags ?? {}).map(([k, v]) => `${k.replaceAll("_", " ")} (${v})`).join(", ")}.</p>
+      <p>These signals are not proof of misconduct. Please hold a 20-minute viva: ask the trainee to
+      explain 3–4 answers from the paper in their own words, then confirm or void the result within
+      2 working days. The result stays on hold until you decide.</p>
+      ${btn(`${APP}/integrity/${p.attempt_id}`, "Open verification")}`),
+  }),
+  result_under_review: (p) => ({
+    subject: "Your assessment result is being confirmed",
+    html: shell(`Hi ${p.trainee},`, `<p>Thank you for completing the <b>${p.assessment}</b>.
+      Your mentor will have a short conversation with you about a few of your answers before the
+      result is confirmed. This is a routine check.</p>`),
+  }),
+  attempt_voided: (p) => ({
+    subject: `Assessment result voided: ${p.trainee} (${p.employee_code})`,
+    html: shell("Result voided after verification", `<p>The mentor voided ${p.trainee}'s
+      <b>${p.assessment}</b> result after a verification viva.</p><p>Notes: ${p.notes}</p>
+      <p>The trainee will re-sit in a supervised centre. Please review under the code of conduct.</p>
+      ${btn(`${APP}/hr/conduct`, "Open conduct review")}`),
+  }),
+  resit_supervised: (p) => ({
+    subject: "Your re-sit will be supervised",
+    html: shell(`Hi ${p.trainee},`, `<p>Your <b>${p.assessment}</b> result could not be confirmed.
+      You will re-sit it at a supervised test centre; HR will share the slot. This does not use
+      one of your two attempts.</p>`),
+  }),
   inactivity_nudge: (p) => ({
     subject: "We missed you on the Academy",
     html: shell(`Hi ${p.trainee},`, `<p>You have ${p.open_items} items open for today.

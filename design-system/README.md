@@ -26,6 +26,9 @@ The design system for the RM Onboarding Academy: the 30-day platform that takes 
 ## Signature element: the 30-day strip
 Thirty cells, one per training day, in three phases (15 / 6 / 9). Completed days fill with `accent`, today is outlined in `accent`, gate days (15, 21, 30) use `warn-soft` until cleared, then `good`. Use it anywhere a person's position in the programme matters.
 
+## Assessment screens
+During a gate test the interface narrows to one panel (the SecureQuestion component). No notes, no assistant, no navigation away. Rules are shown before the first question and recorded activity is shown to the trainee in plain words, in `text-muted`, never in `crit`. A result held for verification uses a `warn` pill ("Result on hold") and supportive copy ("a short conversation with your mentor").
+
 ## Iconography
 No icon set is required. Status is carried by pills (a 6px dot in `currentColor` plus a label). If icons are added later, use a single-weight 1.5px outline set, `text-muted` by default and `accent` when interactive.
 

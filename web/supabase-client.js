@@ -23,8 +23,20 @@ export const api = {
                                         completed_at: new Date().toISOString() });
   },
   fileUrl: (path) => sb.storage.from("training").createSignedUrl(path, 3600),
-  startAttempt: (code) => sb.rpc("start_attempt", { p_code: code }),          // GATE_1 | GATE_2 | FINAL
-  submitAttempt: (attemptId, answers) => sb.rpc("submit_attempt", { p_attempt: attemptId, p_answers: answers }),
+  // Secure assessment flow (migration 005): start → declaration → serve/answer one at a time → submit
+  startAttempt: (code) => sb.rpc("start_attempt", { p_code: code }),          // GATE_1 | GATE_2 | FINAL → {attempt_id, session_token, ...}
+  acceptDeclaration: (a, token) => sb.rpc("accept_declaration", { p_attempt: a, p_token: token }),
+  nextQuestion: (a, token) => sb.rpc("serve_question", { p_attempt: a, p_token: token }),  // {seq, stem, options, seconds_left} | {done:true}
+  answer: (a, token, seq, displayIdx) =>
+    sb.rpc("answer_question", { p_attempt: a, p_token: token, p_seq: seq, p_display_idx: displayIdx }),
+  logEvent: (a, kind, seq) => sb.rpc("log_attempt_event", { p_attempt: a, p_kind: kind, p_seq: seq }),
+  // wire once per attempt: visibilitychange/blur → focus_lost, copy/paste → paste, fullscreenchange → fullscreen_exit
+  submitAttempt: (attemptId) => sb.rpc("submit_attempt", { p_attempt: attemptId, p_answers: null }),
+  myIntegrityReviews: () => sb.from("v_my_integrity_reviews").select("*"),
+  verifyAttempt: (a, outcome, vivaScore, notes) =>
+    sb.rpc("verify_attempt", { p_attempt: a, p_outcome: outcome, p_viva_score: vivaScore, p_notes: notes }),
+  recordViva: (trainee, stage, score, notes) =>
+    sb.rpc("record_viva", { p_trainee: trainee, p_stage: stage, p_score: score, p_notes: notes }),
   logShadow: (row) => sb.from("shadow_logs").insert(row),                     // customer_ref must be masked
   pulse: (row) => sb.from("pulse_surveys").insert(row),
 

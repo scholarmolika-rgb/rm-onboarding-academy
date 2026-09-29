@@ -103,6 +103,20 @@ Deno.serve(async (req) => {
   const { data: me } = await userClient.rpc("me");
   if (!me) return new Response("unauthorised", { status: 401, headers: cors });
 
+  // Assessment integrity: the assistant is closed while the trainee has a test open
+  const { data: testOpen } = await userClient.rpc("has_open_attempt");
+  if (testOpen) {
+    await admin.from("attempt_events").insert({
+      attempt_id: (await admin.from("attempts").select("id").eq("trainee_id", me).is("submitted_at", null)
+                     .order("started_at", { ascending: false }).limit(1).single()).data?.id,
+      trainee_id: me, kind: "assistant_during_test",
+    });
+    return Response.json({
+      answer: "The Academy Assistant is paused while your assessment is in progress. It will be back as soon as you submit. Good luck.",
+      sources: [], locked: true,
+    }, { headers: cors });
+  }
+
   const question = redact(String(body.message ?? "").slice(0, 2000));
   const [{ data: hits }, { data: status }, { data: history }] = await Promise.all([
     admin.rpc("match_kb", { query_embedding: await embed(question), match_count: 6 }),

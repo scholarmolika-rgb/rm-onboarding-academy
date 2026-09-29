@@ -123,6 +123,10 @@ textarea{width:100%;min-height:84px;resize:vertical}
 .opt input{margin-top:3px;accent-color:var(--accent)}
 .opt.right{border-color:var(--good);background:var(--good-soft)} .opt.wrong{border-color:var(--crit);background:var(--crit-soft)}
 
+.testing .g-main{grid-template-columns:minmax(0,1fr)}
+.testing .g-main>.panel:not(#assessPanel){display:none}
+.testing #assessPanel{max-width:760px}
+.rules{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:.88rem}
 .dflow{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:10px}
 .dflow li{padding-left:4px}
 .dflow li::marker{color:var(--accent);font-weight:600}
@@ -200,7 +204,7 @@ for(let i=1;i<=1000;i++){
   else {status='inactive';risk+=45}
   trainees.push({id:i,code:'TRN'+String(i).padStart(4,'0'),name:FN[i%20]+' '+LN[(i*7)%15],mentor,cluster:'Cluster '+mentor,done,g1,status,risk:Math.min(95,risk)});
 }
-const ME=trainees[1]; ME.status='due'; ME.g1=null; ME.done=14; ME.risk=12; // Diya Kulkarni, TRN0002, mentor 1
+const ME=trainees[1]; ME.status='due'; ME.g1=null; ME.done=14; ME.risk=12; ME.attempts=0; ME.supervised=false; // Diya Kulkarni, TRN0002, mentor 1
 const outbox=[
  {t:'08:02',tpl:'Coaching required',to:['mentor4@bank.example','manager4@bank.example','hr4@bank.example'],sub:'Action required: 1-day coaching for Rohan Gupta (TRN0154)'},
  {t:'07:40',tpl:'Coaching overdue',to:['hr2@bank.example','manager7@bank.example'],sub:'Overdue coaching for Tanvi Menon (TRN0331)'},
@@ -278,6 +282,7 @@ views.leadership=()=>{
       <h3>What the bank gets beyond savings</h3>
       <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px">
         <li>Consistent KYC, AML and data-privacy conduct from Day 1, with evidence for audit and RBI inspection.</li>
+        <li>Scores the bank can trust: tests are protected against AI and answer sharing, and doubtful passes are verified in person.</li>
         <li>Early warning of flight risk from test scores, inactivity and pulse surveys.</li>
         <li>Faster time to first revenue, because pricing and P&L are taught before the RM touches a client.</li>
         <li>One view for leadership across 1,000 joiners, 20 clusters and 5 HR partners.</li>
@@ -323,37 +328,106 @@ views.trainee=()=>{
 };
 function assessHTML(){
   if(ME.status==='phase2') return `<h2>Foundation Assessment cleared</h2><div class="callout">Phase 2, Product Pricing & P&L (Days 16–20), is now open. Your Day 21 assessment needs 75%.</div><p class="muted">Open the pricing workbook to start Day 16.</p>`;
+  if(ME.status==='review') return `<h2>Result being confirmed</h2><p>You scored <b class="num">${ME.g1}%</b>. Your mentor will have a short conversation with you about a few of your answers before the result is confirmed. This is a routine check and does not mean you did anything wrong.</p><div class="callout warn">Demo: switch to <b>Coaching</b> to see the mentor's verification card.</div>`;
   if(ME.status==='coaching') return `<h2>Coaching in progress</h2><p>You scored <b class="num">${ME.g1}%</b>. Your mentor, reporting manager and HR partner will each spend a day with you. After all three sessions they decide together whether you move on or revisit specific modules.</p><div class="callout warn">Email sent to Mentor 1, Manager 1 and HR partner. Switch to <b>Coaching</b> in the left menu to see what your mentor sees.</div>`;
   if(ME.status==='remediation') return `<h2>Refresher assigned</h2><p>Your coaches asked you to revisit: <b>${(coaching[ME.id].repeat||[]).map(m=>MODULES[m]).join(', ')}</b>. When you complete them, your second and final attempt opens.</p><button class="btn btn-primary" id="finishRem">Mark refresher complete</button>`;
   if(!quizState) return `<div class="panel-h"><h2>Day 15 Foundation Assessment</h2><span class="pill p-info">Pass mark 80%</span></div>
-   <p>${BANK.length} questions drawn at random from Governance, People, Product and Process. 40 minutes. Attempt ${coaching[ME.id]?.attempt2?'2 of 2':'1 of 2'}.</p>
-   <div class="row"><button class="btn btn-primary" id="startQuiz">Start assessment</button><button class="btn" id="failFast" title="Demo shortcut">Demo: submit a failing attempt</button></div>
+   <p>${BANK.length} questions, one at a time, ${SECS} seconds each. Attempt ${ME.attempts+1} of 2.${ME.supervised?' <b>This re-sit must be taken at the supervised test centre.</b>':''}</p>
+   <div class="row"><button class="btn btn-primary" id="startQuiz">Start assessment</button><button class="btn" id="failFast">Demo: failing attempt</button><button class="btn" id="flagFast">Demo: pass with unusual activity</button></div>
    <p class="muted" style="font-size:.8rem">Below 80%, an email goes to your Mentor, Reporting Manager and HR partner, and each schedules a one-day coaching session with you.</p>`;
-  return `<div class="panel-h"><h2>Day 15 Foundation Assessment</h2><span class="muted num">${Object.keys(quizState.ans).length}/${BANK.length} answered</span></div>
-   ${BANK.map((q,i)=>`<div class="quiz-q"><div><span class="kind">${q.m}</span> <b>${i+1}.</b> ${esc(q.q)}</div>${q.o.map((o,j)=>`<label class="opt ${quizState.done?(j===q.a?'right':(quizState.ans[i]===j?'wrong':'')):''}"><input type="radio" name="q${i}" data-q="${i}" data-o="${j}" ${quizState.ans[i]===j?'checked':''} ${quizState.done?'disabled':''}><span>${esc(o)}</span></label>`).join('')}</div>`).join('')}
-   <div class="row"><button class="btn btn-primary" id="submitQuiz" ${Object.keys(quizState.ans).length<BANK.length?'disabled':''}>Submit</button></div>`;
+  if(quizState.stage==='declare') return `<h2>Before you begin</h2>
+   <ul class="rules">
+     <li>Questions appear one at a time with a ${SECS}-second timer. You cannot go back.</li>
+     <li>Your calculation questions use your own numbers; a colleague's answers will not match yours.</li>
+     <li>The Academy Assistant and other AI tools are paused for you until you submit.</li>
+     <li>Leaving this screen, copying or pasting is recorded. Unusual activity leads to a short conversation with your mentor, never an automatic fail.</li>
+     <li>Answers you cannot explain later may be voided, with a supervised re-sit and a conduct review.</li>
+   </ul>
+   <label class="row" style="align-items:flex-start;gap:10px"><input type="checkbox" id="honour" style="margin-top:4px;accent-color:var(--accent)"><span>I will answer on my own, without AI tools, notes, colleagues or other devices. I understand this assessment decides whether I am ready to serve clients.</span></label>
+   <div class="row"><button class="btn btn-primary" id="beginQuiz" disabled>Begin</button><span class="muted" style="font-size:.8rem">Opens full screen where your browser allows.</span></div>`;
+  const q=quizState.paper[quizState.i];
+  return `<div class="panel-h"><h2>Question ${quizState.i+1} of ${BANK.length}</h2><span class="num mono" id="clock">${quizState.left}s</span></div>
+   <div class="bar"><i id="clockBar" style="width:${quizState.left/SECS*100}%"></i></div>
+   <div class="quiz-q" style="border:0"><div><span class="kind">${q.m}</span> ${esc(q.q)}</div>${q.o.map((o,j)=>`<label class="opt"><input type="radio" name="cur" data-o="${j}"><span>${esc(o)}</span></label>`).join('')}</div>
+   <div class="row" style="justify-content:space-between"><button class="btn btn-primary" id="nextQ" disabled>${quizState.i+1<BANK.length?'Save and next':'Save and submit'}</button><span class="muted" style="font-size:.78rem" id="evtNote">${evtSummary()}</span></div>`;
 }
-function submitAttempt(score, mods){
-  ME.g1=score;
-  if(score>=80){ME.status='phase2';queueEmail('Next phase unlocked',['trainee2@bank.example'],'Next phase unlocked');toast(`Scored ${score}%. Phase 2 unlocked.`);}
+// ---- secure test engine (demo of the server-side rules in migration 005) ----
+const SECS=75; let clockH=null;
+function dpVariant(){const pick=a=>a[Math.floor(Math.random()*a.length)];const st=pick([80,90,110,120,140]),r=pick([40,50,60,70]),c=pick([20,30,35,45]),m=pick([.2,.25,.3]);const f=v=>'₹'+(Math.round(v*100)/100)+' Cr';const ok=f((st+r-c)*(1-m));const o=[ok,f(st+r-c),f((st+r)*(1-m)),f((st+r+c)*(1-m))].filter((v,i,a)=>a.indexOf(v)===i);while(o.length<4)o.push(f(st*(1-m)));return {m:'PRD',calc:true,q:`Stock ₹${st} Cr, eligible receivables ₹${r} Cr, trade creditors ₹${c} Cr, margin ${m*100}%. Drawing power is:`,o,a:0}}
+function shuffleQ(q){const idx=q.o.map((_,i)=>i).sort(()=>Math.random()-.5);return {...q,o:idx.map(i=>q.o[i]),a:idx.indexOf(q.a)}}
+function beginSecure(){
+  const paper=BANK.map(q=>q.calc?dpVariant():q).sort(()=>Math.random()-.5).map(shuffleQ);
+  quizState={stage:'q',paper,i:0,left:SECS,served:Date.now(),ans:[],ev:{focus_lost:0,copy_paste:0,fullscreen_exit:0,assistant_during_test:0},fsTried:false};
+  ME.testOpen=true; document.body.classList.add('testing');
+  try{const r=document.documentElement.requestFullscreen?.();r&&r.catch(()=>{quizState.fsNote=true})}catch(_){quizState.fsNote=true}
+  $('#assessPanel').innerHTML=assessHTML(); tick();
+}
+function tick(){clearInterval(clockH);clockH=setInterval(()=>{if(!quizState||quizState.stage!=='q'){clearInterval(clockH);return}
+  quizState.left=Math.max(0,SECS-Math.floor((Date.now()-quizState.served)/1000));
+  const c=$('#clock'),b=$('#clockBar');if(c)c.textContent=quizState.left+'s';if(b){b.style.width=(quizState.left/SECS*100)+'%';b.style.background=quizState.left<15?'var(--crit)':'var(--accent)'}
+  if(quizState.left<=0)saveAnswer(null)},250)}
+function saveAnswer(choice){
+  const q=quizState.paper[quizState.i];quizState.ans.push({q,choice,ms:Date.now()-quizState.served});
+  quizState.i++;quizState.served=Date.now();quizState.left=SECS;
+  if(quizState.i>=quizState.paper.length){finishSecure();return}
+  $('#assessPanel').innerHTML=assessHTML();
+}
+function evtSummary(){if(!quizState?.ev)return '';const e=quizState.ev;const parts=[];if(e.focus_lost)parts.push(`left screen ${e.focus_lost}×`);if(e.copy_paste)parts.push(`copy/paste ${e.copy_paste}×`);if(e.fullscreen_exit)parts.push(`exited full screen ${e.fullscreen_exit}×`);if(e.assistant_during_test)parts.push('assistant opened');return parts.length?'Recorded: '+parts.join(' · '):'No unusual activity recorded'}
+function integrityScore(ev,ans){let sc=0;const f={};
+  if(ev.focus_lost){f.focus_lost=ev.focus_lost;sc+=Math.min(45,Math.max(0,ev.focus_lost-1)*15)}
+  if(ev.copy_paste){f.copy_paste=ev.copy_paste;sc+=30}
+  if(ev.fullscreen_exit){f.fullscreen_exit=ev.fullscreen_exit;sc+=Math.min(30,ev.fullscreen_exit*15)}
+  if(ev.assistant_during_test){f.assistant_during_test=ev.assistant_during_test;sc+=20}
+  const fast=ans.filter(a=>a.q.calc&&a.choice===a.q.a&&a.ms<8000).length;if(fast>=2){f.implausibly_fast_correct=fast;sc+=Math.min(30,fast*10)}
+  return {score:Math.min(100,sc),flags:f}}
+function finishSecure(){
+  clearInterval(clockH);ME.testOpen=false;document.body.classList.remove('testing');try{document.fullscreenElement&&document.exitFullscreen()}catch(_){}
+  const by={};let ok=0;quizState.ans.forEach(({q,choice})=>{by[q.m]=by[q.m]||[0,0];by[q.m][1]++;if(choice===q.a){ok++;by[q.m][0]++}});
+  const mods={};Object.keys(MODULES).forEach(m=>mods[m]=by[m]?Math.round(by[m][0]/by[m][1]*100):0);
+  const integ=integrityScore(quizState.ev,quizState.ans);
+  submitAttempt(Math.round(ok/BANK.length*100),mods,integ,quizState.ans);
+}
+function submitAttempt(score, mods, integ={score:0,flags:{}}, ans=[]){
+  ME.g1=score; ME.attempts=(ME.attempts||0)+1;
+  if(score>=80 && integ.score>=40){
+    ME.status='review'; ME.review={score,integ,ans:ans.length?ans:BANK.slice(0,4).map(q=>({q,choice:q.a,ms:4200}))};
+    queueEmail('Verification needed',['mentor1@bank.example','cc: hr1@bank.example'],`Verification needed: ${ME.name} (${ME.code})`);
+    queueEmail('Result being confirmed',['trainee2@bank.example'],'Your assessment result is being confirmed');
+    toast(`Scored ${score}%. Result held for a short check by your mentor.`);
+  } else if(score>=80){ME.status='phase2';queueEmail('Next phase unlocked',['trainee2@bank.example'],'Next phase unlocked');toast(`Scored ${score}%. Phase 2 unlocked.`);}
   else{
     ME.status='coaching';
-    coaching[ME.id]={gate:'GATE_1',score,mentor:null,manager:null,hr:null,mods,attempt2:!!coaching[ME.id]};
+    coaching[ME.id]={gate:'GATE_1',score,mentor:null,manager:null,hr:null,mods,attempt2:!!coaching[ME.id],flags:integ.flags};
     queueEmail('Coaching required',['mentor1@bank.example','manager1@bank.example','hr1@bank.example'],`Action required: 1-day coaching for ${ME.name} (${ME.code})`);
     queueEmail('Coaching scheduled',['trainee2@bank.example'],'Your personalised coaching sessions are scheduled');
     toast(`Scored ${score}%. Email sent to Mentor, Reporting Manager and HR.`);
   }
   quizState=null; render();
 }
-
+function verifyCard(role){
+  if(ME.status!=='review'||!ME.review||role==='manager')return '';
+  const r=ME.review, picks=r.ans.slice(0,4);
+  const label={focus_lost:'Left the test screen',copy_paste:'Copy or paste',fullscreen_exit:'Exited full screen',assistant_during_test:'Tried to open the assistant',implausibly_fast_correct:'Calculations answered correctly in under 8 s'};
+  return `<div class="panel" style="padding:var(--s4);gap:var(--s3);background:var(--bg);border-color:var(--warn)">
+    <div class="panel-h"><div><b>${esc(ME.name)}</b> <span class="mono muted">${ME.code}</span></div><span class="pill p-warn">Result on hold · ${r.score}%</span></div>
+    <p style="font-size:.86rem">Passed Gate 1, but the attempt showed unusual activity (integrity score <b class="num">${r.integ.score}</b>/100). These signals are not proof. Hold a 20-minute conversation and decide within 2 working days.</p>
+    <div class="row">${Object.entries(r.integ.flags).map(([k,v])=>`<span class="pill p-warn">${label[k]||k} · ${v}</span>`).join('')}</div>
+    <div><span class="eyebrow">Ask the trainee to explain these answers in their own words</span>
+      <ol class="dflow" style="margin-top:6px">${picks.map(a=>`<li style="font-size:.85rem">${esc(a.q.q)} <span class="muted">They chose: ${esc(a.choice==null?'no answer':a.q.o[a.choice])} · ${Math.round(a.ms/1000)}s</span></li>`).join('')}</ol></div>
+    <div class="row"><label class="f">Viva score<select id="vivaScore"><option value="5">5 · Explains fluently</option><option value="4">4 · Explains well</option><option value="3" selected>3 · Adequate</option><option value="2">2 · Struggles</option><option value="1">1 · Cannot explain</option></select></label></div>
+    <label class="f">What you asked and how they answered (min. 30 characters)<textarea id="vivaNotes"></textarea></label>
+    <div class="row"><button class="btn btn-primary" id="confirmRes" data-r="${role}">Confirm result</button><button class="btn" id="voidRes" data-r="${role}">Void result · supervised re-sit</button></div>
+  </div>`;
+}
 function coachView(role){
   const label={mentor:'Mentor 1 · Senior RM, Cluster 1',manager:'Manager 1 · Cluster Head, Cluster 1'}[role]||'HR partner · North';
   const queue=Object.entries(coaching).filter(([id,c])=>!c[role]).map(([id,c])=>({t:trainees[id-1],c}));
   const team=role==='hr'?trainees.filter(t=>(t.mentor-1)%5===0):trainees.filter(t=>t.mentor===1);
   return `
-  <div class="head"><div><span class="eyebrow">${label}</span><h1>${role==='mentor'?'Coaching queue':role==='manager'?'My team':'Coaching decisions'}</h1><p class="sub">Each trainee who misses a gate gets one day with each coach. Record the outcome after your session. If any coach asks for a repeat, the named modules are assigned and a re-test follows.</p></div><span class="pill ${queue.length?'p-warn':'p-good'}">${queue.length} awaiting your decision</span></div>
+  <div class="head"><div><span class="eyebrow">${label}</span><h1>${role==='mentor'?'Coaching queue':role==='manager'?'My team':'Coaching decisions'}</h1><p class="sub">Each trainee who misses a gate gets one day with each coach. Record the outcome after your session. If any coach asks for a repeat, the named modules are assigned and a re-test follows.</p></div><span class="pill ${queue.length+(ME.status==='review'&&role!=='manager'?1:0)?'p-warn':'p-good'}">${queue.length+(ME.status==='review'&&role!=='manager'?1:0)} awaiting your decision</span></div>
   <div class="grid g-main">
     <div class="panel"><h2>Awaiting your session</h2>
+      ${verifyCard(role)}
       ${queue.length?queue.map(({t,c})=>`<div class="panel" style="padding:var(--s4);gap:var(--s3);background:var(--bg)">
         <div class="panel-h"><div><b>${esc(t.name)}</b> <span class="mono muted">${t.code}</span></div><span class="pill p-warn">${c.gate==='GATE_1'?'Gate 1':'Gate 2'} · ${c.score}%</span></div>
         <div class="row" style="gap:var(--s4)">${Object.entries(c.mods).map(([m,v])=>`<div style="min-width:90px"><span class="eyebrow">${m}</span><div class="bar"><i style="width:${v}%;background:${v<70?'var(--crit)':v<80?'var(--warn)':'var(--good)'}"></i></div><span class="num" style="font-size:.78rem">${v}%</span></div>`).join('')}</div>
@@ -361,7 +435,7 @@ function coachView(role){
         <label class="f">Session notes (min. 30 characters, kept in the audit trail)<textarea id="n_${t.id}" placeholder="What you covered, strengths, gaps, and your reasoning"></textarea></label>
         <div class="row" style="font-size:.85rem">Repeat modules: ${Object.keys(MODULES).map(m=>`<label class="row" style="gap:4px"><input type="checkbox" id="m_${t.id}_${m}" ${c.mods[m]<70?'checked':''}> ${m}</label>`).join('')}</div>
         <div class="row"><button class="btn btn-primary" data-dec="pass" data-t="${t.id}" data-r="${role}">Pass to next phase</button><button class="btn" data-dec="repeat" data-t="${t.id}" data-r="${role}">Repeat selected modules</button></div>
-      </div>`).join(''):`<p class="muted">No sessions waiting. New escalations arrive here and by email the moment a trainee misses a gate.</p>`}
+      </div>`).join(''):(ME.status==='review'&&role!=='manager')?'':`<p class="muted">No sessions waiting. New escalations arrive here and by email the moment a trainee misses a gate.</p>`}
     </div>
     <div class="panel"><h2>${role==='hr'?'Your 200 trainees':'Your 50 trainees'}</h2>
       <div class="hbars">${[['Gate 1 cleared','passed_gate1','var(--good)'],['Test due','due','var(--accent)'],['Coaching','coaching','var(--warn)'],['Repeating','remediation','var(--crit)'],['Inactive','inactive','var(--crit)']].map(([l,s,col])=>{const v=team.filter(t=>t.status===s||(s==='passed_gate1'&&t.status==='phase2')).length;return `<div class="hbar"><span>${l}</span><div class="track"><i style="width:${v/team.length*100}%;background:${col}"></i></div><span class="num" style="text-align:right">${v}</span></div>`}).join('')}</div>
@@ -407,6 +481,21 @@ views.hr=()=>{
     <div class="panel stat"><span class="eyebrow">Pulse score</span><span class="v">3.9<span style="font-size:1rem" class="muted">/5</span></span><span class="d">confidence & belonging, Day 10</span></div>
   </div>
   <div class="callout warn"><b>Capacity check.</b> With all 1,000 in one cohort, ${coachingNow} trainees need coaching on the same days: about ${Math.round(coachingNow/20)} coaching days per mentor and per manager, and ${Math.round(coachingNow/5)} for each HR partner. Running four monthly waves of 250 brings this to about ${Math.round(coachDays/20)+1} days per mentor and keeps shadowing at roughly 12 trainees per mentor instead of 50. HR can delegate its session to a trained L&D coach where volumes require.</div>
+  <div class="panel"><div class="panel-h"><h2>Assessment integrity · Gate 1</h2><span class="muted" style="font-size:.8rem">Held results are decided by a person, never by the score alone</span></div>
+    <div class="grid g4">
+      <div class="roi-out"><span class="eyebrow">Results held for check</span><span class="v">${23+(ME.status==='review'?1:0)+(ME.confirmed||0)+(ME.voided||0)}</span><span class="muted" style="font-size:.78rem">2.3% of attempts</span></div>
+      <div class="roi-out"><span class="eyebrow">Confirmed after viva</span><span class="v">${17+(ME.confirmed||0)}</span><span class="muted" style="font-size:.78rem">result stands</span></div>
+      <div class="roi-out"><span class="eyebrow">Voided</span><span class="v">${4+(ME.voided||0)}</span><span class="muted" style="font-size:.78rem">supervised re-sit + conduct review</span></div>
+      <div class="roi-out"><span class="eyebrow">Awaiting mentor</span><span class="v">${2+(ME.status==='review'?1:0)}</span><span class="muted" style="font-size:.78rem">SLA 2 working days</span></div>
+    </div>
+    <div class="tscroll"><table><thead><tr><th>Signal</th><th class="r">Attempts</th><th>What it usually means</th></tr></thead><tbody>
+      <tr><td>Left the test screen 2+ times</td><td class="r num">31</td><td>Looking something up, or an interruption at the desk</td></tr>
+      <tr><td>Copy or paste</td><td class="r num">9</td><td>Question text copied into another tool</td></tr>
+      <tr><td>Calculations correct in under 8 s</td><td class="r num">6</td><td>Answer computed elsewhere in advance</td></tr>
+      <tr><td>Same wrong answers as a cohort peer</td><td class="r num">3</td><td>Answers shared between trainees</td></tr>
+      <tr><td>Assistant opened during test</td><td class="r num">12</td><td>Blocked automatically; usually habit, not intent</td></tr>
+    </tbody></table></div>
+  </div>
   <div class="grid g2">
     <div class="panel"><h2>Highest attrition risk</h2><p class="muted" style="font-size:.8rem">Blends test gaps, coaching events, inactivity and pulse scores. Recomputed nightly.</p>
       <div class="tscroll"><table><thead><tr><th>Trainee</th><th>Cluster</th><th>Status</th><th>Risk</th></tr></thead><tbody>${risky.map(t=>`<tr><td>${esc(t.name)}<br><span class="mono muted">${t.code}</span></td><td>${t.cluster}</td><td>${pill(t.status)}</td><td>${riskPill(t.risk)}</td></tr>`).join('')}</tbody></table></div>
@@ -430,6 +519,19 @@ views.design=()=>`
       <div class="step gate"><span class="eyebrow">Day 30</span><span class="t">Certification</span><small>Final assessment (80%) and sign-off by Mentor, Reporting Manager and HR. Any rejection goes to HR review.</small></div>
       <div class="step"><span class="eyebrow">Guardrail</span><span class="t">Two attempts per gate</span><small>A second miss moves the trainee to an HR performance review: extension, role change or exit.</small></div>
       <div class="step"><span class="eyebrow">After Day 30</span><span class="t">60 / 90-day check-ins</span><small>Pulse surveys and portfolio review keep the attrition signal running after certification.</small></div>
+    </div>
+  </div>
+  <div class="panel"><h2>Keeping tests honest</h2>
+    <p class="muted" style="max-width:70ch">Trainees are encouraged to learn with AI through the Academy Assistant. Tests measure what the trainee can do alone, because that is what a client meeting needs. No single control stops a determined person, so the platform layers five.</p>
+    <div class="flow">
+      <div class="step"><span class="eyebrow">1 · Design</span><span class="t">Hard to look up</span><small>Scenario questions on the bank's own policies, and calculations with personal numbers per trainee, so shared or pre-computed answers do not match.</small></div>
+      <div class="step"><span class="eyebrow">2 · Delivery</span><span class="t">Server-timed</span><small>One question at a time, 75 seconds each, no going back, options shuffled. The clock and answer key live on the server.</small></div>
+      <div class="step"><span class="eyebrow">3 · Environment</span><span class="t">Locked down</span><small>Assistant paused, one session only, full screen and a secure browser on bank devices. Gate re-sits in a supervised test room.</small></div>
+      <div class="step"><span class="eyebrow">4 · Signals</span><span class="t">Recorded, not judged</span><small>Leaving the screen, copy/paste, IP change, impossibly fast calculations and shared wrong answers add to an integrity score.</small></div>
+      <div class="step gate"><span class="eyebrow">5 · People</span><span class="t">Verification viva</span><small>A high score on a pass holds the result. The mentor asks the trainee to explain 3–4 answers, then confirms or voids it.</small></div>
+      <div class="step"><span class="eyebrow">Outcome</span><span class="t">Voided</span><small>Result removed, supervised re-sit that does not use an attempt, conduct review by HR.</small></div>
+      <div class="step"><span class="eyebrow">Beyond the test</span><span class="t">Performance counts</span><small>Coaching days, shadow ratings and the Day-30 viva test understanding live. The mentor cannot sign off without a viva score of 3 or more.</small></div>
+      <div class="step"><span class="eyebrow">Fairness</span><span class="t">Transparent rules</span><small>Trainees see the rules and their own recorded activity before and during the test. Signals are evidence for a person, never a verdict.</small></div>
     </div>
   </div>
   <div class="grid g2">
@@ -466,16 +568,26 @@ function render(){
   document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-current',b.dataset.v===view?'page':'false'));
   if(view==='leadership')calcROI();
   }
-document.getElementById('nav').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;view=b.dataset.v;try{history.replaceState(null,'','#'+view)}catch(_){}render();window.scrollTo(0,0)});
-document.getElementById('main').addEventListener('input',e=>{if(e.target.id?.startsWith('r_'))calcROI();if(e.target.dataset.q!==undefined){quizState.ans[e.target.dataset.q]=+e.target.dataset.o;const b=$('#submitQuiz');if(b)b.disabled=Object.keys(quizState.ans).length<BANK.length;const h=$('#assessPanel .panel-h .muted');if(h)h.textContent=Object.keys(quizState.ans).length+'/'+BANK.length+' answered'}});
+document.getElementById('nav').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(quizState?.stage==='q'&&b.dataset.v!=='trainee'){toast('Finish or let the timer run out first. Leaving is recorded.');rec('focus_lost');return}view=b.dataset.v;try{history.replaceState(null,'','#'+view)}catch(_){}render();window.scrollTo(0,0)});
+document.getElementById('main').addEventListener('input',e=>{if(e.target.id?.startsWith('r_'))calcROI();if(e.target.id==='honour'){$('#beginQuiz').disabled=!e.target.checked}if(e.target.name==='cur'){$('#nextQ').disabled=false}});
+// behaviour capture while a test is open (the server records the same events in attempt_events)
+function rec(k){if(quizState?.stage==='q'){quizState.ev[k]++;const n=$('#evtNote');if(n)n.textContent=evtSummary()}}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)rec('focus_lost')});
+window.addEventListener('blur',()=>{if(!document.hidden)rec('focus_lost')});
+['copy','paste','cut'].forEach(k=>document.addEventListener(k,e=>{if(quizState?.stage==='q'){e.preventDefault();rec('copy_paste')}}));
+document.addEventListener('contextmenu',e=>{if(quizState?.stage==='q')e.preventDefault()});
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&quizState?.stage==='q')rec('fullscreen_exit')});
 document.getElementById('main').addEventListener('click',e=>{
   const t=e.target;
-  if(t.id==='startQuiz'){quizState={ans:{}};$('#assessPanel').innerHTML=assessHTML();return}
+  if(t.id==='startQuiz'){quizState={stage:'declare'};$('#assessPanel').innerHTML=assessHTML();return}
+  if(t.id==='beginQuiz'){beginSecure();return}
   if(t.id==='failFast'){submitAttempt(70,{GOV:55,PPL:85,PRD:75,PRC:65});return}
-  if(t.id==='submitQuiz'){
-    const by={};let ok=0;BANK.forEach((q,i)=>{by[q.m]=by[q.m]||[0,0];by[q.m][1]++;if(quizState.ans[i]===q.a){ok++;by[q.m][0]++}});
-    const mods={};Object.keys(MODULES).forEach(m=>mods[m]=by[m]?Math.round(by[m][0]/by[m][1]*100):0);
-    submitAttempt(Math.round(ok/BANK.length*100),mods);return}
+  if(t.id==='flagFast'){submitAttempt(90,{GOV:83,PPL:100,PRD:100,PRC:83},{score:60,flags:{focus_lost:3,copy_paste:1}});return}
+  if(t.id==='nextQ'){const c=document.querySelector('input[name="cur"]:checked');saveAnswer(c?+c.dataset.o:null);return}
+  if(t.id==='confirmRes'||t.id==='voidRes'){const n=($('#vivaNotes')?.value||'').trim();if(n.length<30){toast('Add at least 30 characters describing the conversation.');$('#vivaNotes')?.focus();return}
+    if(t.id==='confirmRes'){ME.status='phase2';ME.review=null;queueEmail('Next phase unlocked',['trainee2@bank.example'],'Result confirmed after verification');toast('Result confirmed. Phase 2 unlocked for '+ME.name.split(' ')[0]+'.')}
+    else{ME.status='due';ME.supervised=true;ME.attempts=Math.max(0,ME.attempts-1);ME.review=null;queueEmail('Result voided',['hr1@bank.example','manager1@bank.example'],`Assessment result voided: ${ME.name} (${ME.code})`);queueEmail('Supervised re-sit',['trainee2@bank.example'],'Your re-sit will be supervised');toast('Result voided. Supervised re-sit booked; HR notified for conduct review.')}
+    ME.voided=(ME.voided||0)+(t.id==='voidRes'?1:0);ME.confirmed=(ME.confirmed||0)+(t.id==='confirmRes'?1:0);render();return}
   if(t.id==='finishRem'){ME.status='due';quizState=null;toast('Refresher complete. Attempt 2 of 2 is open.');render();return}
   if(t.dataset.dec){decide(+t.dataset.t,t.dataset.r,t.dataset.dec);return}
   const ck=t.closest('.check');if(ck){const k=ck.dataset.k;doneItems.has(k)?doneItems.delete(k):doneItems.add(k);render()}
@@ -494,6 +606,7 @@ function fallback(q){q=q.toLowerCase();
   if(q.includes('kyc'))return 'Periodic KYC: high-risk customers every 2 years, medium every 8, low every 10. For a company, anyone owning more than 10% is a beneficial owner.\nSource: Day 2, Regulatory map.';
   return 'I can help with programme rules, KYC and AML, products, drawing power, pricing and RAROC. The live assistant is not available in this view, so these are stored answers.'}
 async function ask(q){
+  if(ME.testOpen){addMsg('user',q);addMsg('assistant','The Academy Assistant is paused while your assessment is in progress. It will be back as soon as you submit.');rec('assistant_during_test');return}
   addMsg('user',q); const el=addMsg('assistant','Thinking…'); $('#chatSend').disabled=true;
   const redacted=q.replace(/\b[A-Z]{5}[0-9]{4}[A-Z]\b/g,'[PAN]').replace(/\b\d{4}\s?\d{4}\s?\d{4}\b/g,'[AADHAAR]');
   try{

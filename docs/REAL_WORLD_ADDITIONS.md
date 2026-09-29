@@ -28,6 +28,9 @@ Each item below closes a gap a real bank would hit in the first pilot.
 - **Data residency**: Supabase on AWS Mumbai or self-hosted; LLM can be switched to an on-prem open model.
 - **Regulatory content owner**: Compliance re-validates regulatory figures in the question bank each quarter against the latest RBI Master Directions.
 
+## Assessment integrity (AI and answer sharing)
+Full design in `ASSESSMENT_INTEGRITY.md`. In short: personalised calculation numbers per trainee; one question at a time on a server clock with no going back; assistant paused and question bank never indexed; behaviour signals build an integrity score; a held pass is verified by the mentor in a 20-minute viva; voided results mean a supervised re-sit and a conduct review; Day-30 sign-off requires a viva. Signals never fail anyone automatically.
+
 ## Engagement
 - Supportive email to the trainee when coaching starts (no scores in subject lines).
 - Inactivity nudges after 48 hours; attrition-risk score for HR.
