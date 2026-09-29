@@ -1,6 +1,6 @@
 # RM Academy
 
-The design system for the RM Onboarding Academy: the 30-day platform that takes a new corporate Relationship Manager from Day 1 to certified. It serves five audiences on the same screens (trainee, mentor, reporting manager, HR partner, bank leadership), so it is quiet, dense and exact. One ink-blue accent, neutral greys biased toward that blue, and three semantic colours that only ever mean a state.
+The design system for the RM Onboarding Academy: the 30-day platform that takes a new corporate Relationship Manager from Day 1 to certified. It serves four interfaces (New Joinee, Mentor, Reporting Boss, HR), so it is quiet, dense and exact. One ink-blue accent, neutral greys biased toward that blue, and three semantic colours that only ever mean a state.
 
 ## Principles
 1. **Calm over loud.** A bank's people judge a tool by how trustworthy it looks. No gradients, no emoji, no decorative colour. `accent` appears only where something is actionable or selected.
@@ -21,13 +21,16 @@ The design system for the RM Onboarding Academy: the 30-day platform that takes 
 - **Type:** `display` (Source Serif 4) for page and section titles only; `body` (IBM Plex Sans) for everything else; `mono` (IBM Plex Mono) for codes and addresses. Eyebrows are uppercase with 0.08em tracking.
 - **Spacing:** 4px base (`space-1` … `space-7`). Panels pad `space-5`; grids gap `space-4`; page gutter never below `space-4`.
 - **Radius:** `radius-sm` day cells and tags, `radius-md` controls, `radius-lg` panels, `radius-pill` status and chips.
-- **Layout:** a 232px left rail of role views on desktop that becomes top tabs under 760px; content in 4-, 3- or 2-column grids that collapse to one column on phones.
+- **Layout:** a 248px left rail (who you are, then your menu) on desktop that becomes top tabs under 760px; content in 4-, 3- or 2-column grids that collapse to one column on phones.
 
 ## Signature element: the 30-day strip
 Thirty cells, one per training day, in three phases (15 / 6 / 9). Completed days fill with `accent`, today is outlined in `accent`, gate days (15, 21, 30) use `warn-soft` until cleared, then `good`. Use it anywhere a person's position in the programme matters.
 
 ## Assessment screens
 During a gate test the interface narrows to one panel (the SecureQuestion component). No notes, no assistant, no navigation away. Rules are shown before the first question and recorded activity is shown to the trainee in plain words, in `text-muted`, never in `crit`. A result held for verification uses a `warn` pill ("Result on hold") and supportive copy ("a short conversation with your mentor").
+
+## People screens
+HR adds joinees in a two-column form with a live **AssignmentPreview** under it: Reporting Boss (same department), Mentor (other department) and HR partner (region), each with department, region and load (`12/50`). A persona check shows as a `good` pill ("Persona fits") or a `crit` pill ("Experience outside 3–5 years") before the person presses Add. Experience is always written `4y 6m`. Seats are shown as a thin `accent` bar with "36 of 1,000 filled · 964 free". Departments use short names in tables (Mid-Corporate, Trade & SCF) and full names in forms.
 
 ## Iconography
 No icon set is required. Status is carried by pills (a 6px dot in `currentColor` plus a label). If icons are added later, use a single-weight 1.5px outline set, `text-muted` by default and `accent` when interactive.

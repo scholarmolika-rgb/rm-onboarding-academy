@@ -40,6 +40,14 @@ export const api = {
   logShadow: (row) => sb.from("shadow_logs").insert(row),                     // customer_ref must be masked
   pulse: (row) => sb.from("pulse_surveys").insert(row),
 
+  // HR: people
+  seatUsage: () => sb.from("v_seat_usage").select("*"),
+  coachLoad: () => sb.from("v_coach_load").select("*").order("role").order("department"),
+  departments: () => sb.from("departments").select("*"),
+  // {full_name, email, phone, department, region, experience_months, previous_employer, previous_role, start_date, manager_id?, mentor_id?}
+  createJoinee: (row) => sb.rpc("hr_create_joinee", { p: row }),
+  createJoinees: (rows) => sb.rpc("hr_create_joinees", { p_rows: rows }),   // per-row {ok, error}
+
   // Coaches
   myCoachingQueue: () => sb.from("v_my_coaching_queue").select("*").order("sla_due"),
   recordCoaching: (sessionId, decision, notes, repeatModules = []) =>

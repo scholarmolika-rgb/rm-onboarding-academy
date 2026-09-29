@@ -217,32 +217,66 @@ const ROLE_NAMES={mentor:'Mentor',boss:'Reporting Boss',hr:'HR'};
 const SECS=75, MAX_ATTEMPTS=2;
 const COMPETENCIES=['Needs discovery','Product fit','Pricing & P&L','Compliance & conduct','Communication','Ownership'];
 
-// ================= demo data =================
-let seed=42; const rnd=()=>{seed=(seed*16807)%2147483647;return (seed-1)/2147483646};
+// ================= people model (mirrors migration 006) =================
+const DEPTS={LCB:'Large Corporate Banking',MCB:'Mid-Corporate Banking',ECB:'Emerging Corporates (SME)',TXB:'Transaction Banking',TSF:'Trade & Supply Chain Finance'};
+const DK=Object.keys(DEPTS), REGIONS=['North','South','East','West','Central'], CAPACITY=1000;
+const DSHORT={LCB:'Large Corporate',MCB:'Mid-Corporate',ECB:'Emerging Corporates',TXB:'Transaction Banking',TSF:'Trade & SCF'};
+const HRS=['Anita Rao','Farhan Qureshi','Meera Pillai','Sandeep Kohli','Lavanya Iyer'].map((n,i)=>({id:'HR'+(i+1),kind:'hr',name:n,email:`hr${i+1}@bank.example`,region:REGIONS[i],max:200,desig:'HR Business Partner'}));
+const BOSS_N=['Vikram Malhotra','Shalini Nair','Arvind Kulkarni','Rekha Menon','Sanjay Batra','Deepa Raghavan','Manish Agarwal','Kavita Deshpande','Rajesh Iyer','Neelam Sethi','Harish Venkat','Pallavi Joshi','Amitabh Saxena','Sunita Reddy','Gautam Bose','Radhika Chopra','Suresh Pillai','Anjali Mathur','Naveen Rao','Farida Khan'];
+const MENT_N=['Rohit Khanna','Meenakshi Sundaram','Ajay Thakur','Priyanka Sen','Kiran Hegde','Sameer Ali','Nandini Rao','Pradeep Gupta','Swati Jain','Venkatesh Murthy','Ritu Arora','Imran Shaikh','Lakshmi Narayan','Tarun Mehra','Divya Krishnan','Abhishek Roy','Geeta Pandey','Mohit Bansal','Shreya Kapoor','Ravi Shankar'];
+const BOSSES=[],MENTORS=[];
+for(let d=0;d<5;d++)for(let k=0;k<4;k++){const n=d*4+k+1;
+  BOSSES.push({id:'RB'+n,kind:'boss',name:BOSS_N[n-1],email:`boss${n}@bank.example`,dept:DK[d],region:REGIONS[(d+k)%5],exp:120+((n*7)%60),max:50,desig:['Cluster Head','Senior Vice President','Vice President','Cluster Head'][k]});
+  MENTORS.push({id:'MN'+n,kind:'mentor',name:MENT_N[n-1],email:`mentor${n}@bank.example`,dept:DK[d],region:REGIONS[(d+k+2)%5],exp:144+((n*11)%96),max:50,desig:['Senior Relationship Manager','Senior Relationship Manager','Product Head','Senior Credit Partner'][k]})}
+const PEOPLE=Object.fromEntries([...HRS,...BOSSES,...MENTORS].map(p=>[p.id,p]));
+const joinees=[]; let nextCode=1;
+const byId=id=>joinees.find(j=>j.id===id);
+const coachOf=(j,r)=>PEOPLE[j[r]];
+const load=c=>joinees.filter(j=>j[c.kind]===c.id).length;
+const yrs=m=>`${Math.floor(m/12)}y ${m%12}m`;
+function pickCoach(kind,dept,region,same){const pool=kind==='boss'?BOSSES:kind==='mentor'?MENTORS:HRS;
+  return pool.filter(c=>load(c)<c.max&&(dept==null||(same?c.dept===dept:c.dept!==dept))).sort((a,b)=>((b.region===region)-(a.region===region))||load(a)-load(b)||a.name.localeCompare(b.name))[0]}
+function createJoinee(p){
+  const name=(p.name||'').trim(),email=(p.email||'').trim().toLowerCase(),exp=+p.exp,dept=(p.dept||'').toUpperCase(),region=p.region;
+  if(!name)throw Error('Name is required');
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))throw Error('A valid work email is required');
+  if(joinees.some(j=>j.email===email)||Object.values(PEOPLE).some(x=>x.email===email))throw Error(`Email ${email} is already registered`);
+  if(!DEPTS[dept])throw Error(`Unknown department ${p.dept||'(blank)'}`);
+  if(!REGIONS.includes(region))throw Error(`Unknown region ${region||'(blank)'}`);
+  if(!(exp>=37&&exp<=59))throw Error(`New joinees must have more than 3 and less than 5 years of experience (got ${isNaN(exp)?'none':yrs(exp)})`);
+  if(joinees.length>=CAPACITY)throw Error(`Cohort is full (${joinees.length} of ${CAPACITY} seats used)`);
+  const boss=p.boss?PEOPLE[p.boss]:pickCoach('boss',dept,region,true), mentor=p.mentor?PEOPLE[p.mentor]:pickCoach('mentor',dept,region,false);
+  const hr=HRS.find(h=>h.region===region&&load(h)<h.max)||pickCoach('hr',null,region,false);
+  if(!boss)throw Error(`No Reporting Boss in ${DSHORT[dept]} has a free place`);
+  if(boss.dept!==dept)throw Error(`Reporting Boss must be from ${DSHORT[dept]}, not ${DSHORT[boss.dept]}`);
+  if(!mentor)throw Error(`No mentor outside ${DSHORT[dept]} has a free place`);
+  if(mentor.dept===dept)throw Error(`Mentor must come from a different department than ${DSHORT[dept]}`);
+  const j={id:nextCode,code:'TRN'+String(nextCode++).padStart(4,'0'),name,email,phone:p.phone||'',dept,region,exp,prevEmp:p.prevEmp||'',prevRole:p.prevRole||'',start:p.start||'2026-10-05',
+    boss:boss.id,mentor:mentor.id,hr:hr.id,status:'due',g1:null,risk:Math.round(Math.random()*20),added:p.added||false};
+  joinees.push(j);return j}
+
+// demo intake: 24 joinees (976 seats free for HR to test with)
 const FN=['Aarav','Diya','Kabir','Ishita','Rohan','Sneha','Vikram','Ananya','Arjun','Priya','Nikhil','Tanvi','Rahul','Kavya','Siddharth','Pooja','Aditya','Neha','Varun','Riya'];
 const LN=['Sharma','Reddy','Iyer','Mehta','Nair','Gupta','Das','Kulkarni','Singh','Banerjee','Patel','Menon','Joshi','Rao','Chawla'];
-const trainees=[];
-for(let i=1;i<=1000;i++){
-  const cl=1+Math.floor((i-1)/50); const r=rnd(); let status='due',g1=null,risk=Math.round(rnd()*35);
-  if(r<0.62){g1=80+Math.round(rnd()*18);status='phase2'} else if(r<0.80){g1=62+Math.round(rnd()*17);status='coaching';risk+=35}
-  else if(r<0.86){g1=65+Math.round(rnd()*14);status='remediation';risk+=40} else if(r<0.97){status='due'} else {status='inactive';risk+=45}
-  trainees.push({id:i,code:'TRN'+String(i).padStart(4,'0'),name:FN[i%20]+' '+LN[(i*7)%15],cluster:cl,hr:1+((cl-1)%5),g1,status,risk:Math.min(95,risk)});
-}
-const ME=trainees[1];  // the demo New Joinee: TRN0002, Cluster 1 (Mentor 1, Manager 1, HR partner 1)
+const PREV_E=['Yes Bank','IndusInd Bank','Federal Bank','RBL Bank','IDFC First Bank','Bandhan Bank'], PREV_R=['Assistant RM','Credit Analyst','Relationship Officer','Trade Finance Officer','Cash Management Sales'];
+for(let i=1;i<=24;i++)createJoinee({name:FN[i%20]+' '+LN[(i*7)%15],email:`trainee${i}@bank.example`,dept:DK[i%5],region:REGIONS[(i*3)%5],exp:37+(i*5)%23,prevEmp:PREV_E[i%6],prevRole:PREV_R[i%5]});
+let seed=42; const rnd=()=>{seed=(seed*16807)%2147483647;return (seed-1)/2147483646};
+joinees.forEach(j=>{const r=rnd();if(r<0.6){j.g1=80+Math.round(rnd()*18);j.status='phase2'}else if(r<0.78){j.g1=62+Math.round(rnd()*17);j.status='coaching';j.risk+=35}else if(r<0.85){j.g1=66+Math.round(rnd()*12);j.status='remediation';j.risk+=40}else if(r<0.95){j.status='due'}else{j.status='inactive';j.risk+=45}j.risk=Math.min(95,j.risk)});
+const ME=joinees.find(j=>j.email==='trainee2@bank.example');   // the demo New Joinee
 Object.assign(ME,{status:'learning',g1:null,risk:12,day:15,phase:1,attempts:{G1:0,G2:0,F:0},scores:{},supervised:false,shadow:[],sign:{},viva:null,review:null,testOpen:false});
+const VIEWER={mentor:coachOf(ME,'mentor'),boss:coachOf(ME,'boss'),hr:coachOf(ME,'hr')};   // who the Mentor / Boss / HR interfaces show
+const inMyTeam=(j,r)=>r==='hr'?j.hr===VIEWER.hr.id:j[r]===VIEWER[r].id;
 const done=new Set(); // item keys "day-idx"
 Object.entries(CONTENT.days).forEach(([d,v])=>{if(+d<15)v.items.forEach((_,i)=>done.add(d+'-'+i))});
 done.delete('14-1'); // one item left so the joinee sees the "complete before test" rule
 
-// coaching cases keyed by trainee id: {gate, score, mods, need:[roles], dec:{role:{d,notes,mods}}}
+// coaching cases keyed by joinee id: {gate, score, mods, need:[roles], dec:{role:{d,notes,mods}}}
 const coaching={};
-trainees.filter(t=>t.cluster===1&&t.status==='coaching').slice(0,3).forEach(t=>coaching[t.id]={gate:'G1',score:t.g1,mods:{GOV:55+Math.round(rnd()*30),PPL:70+Math.round(rnd()*25),PRD:55+Math.round(rnd()*35),PRC:50+Math.round(rnd()*35)},need:GATES.G1.roles,dec:{}});
-{const t=trainees.find(t=>t.cluster===1&&t.status==='phase2'&&!coaching[t.id]);t.status='coaching2';coaching[t.id]={gate:'G2',score:68,mods:{PRI:60,PNL:75},need:GATES.G2.roles,dec:{}}}
-const otherShadow=[{tid:trainees.find(t=>t.cluster===1&&t.id>40).id,day:24,ref:'CL-7Q2M',type:'Credit discussion',obs:'Mentor walked the CFO through the renewal terms and the DSCR covenant; client asked to relax the stock-statement frequency.',refl:'I would have explained why the covenant exists before discussing relaxation.',state:'pending'}];
-const outbox=[
- {t:'08:02',tpl:'Coaching required',to:['mentor4@bank.example','manager4@bank.example','hr4@bank.example'],sub:'Action required: 1-day coaching for Rohan Gupta (TRN0154)'},
- {t:'07:40',tpl:'Coaching overdue',to:['hr2@bank.example','manager7@bank.example'],sub:'Overdue coaching for Tanvi Menon (TRN0331)'}];
-const integrityStats={held:23,confirmed:17,voided:4};
+joinees.filter(j=>j!==ME&&j.status==='coaching').forEach(j=>coaching[j.id]={gate:'G1',score:j.g1,mods:{GOV:55+Math.round(rnd()*30),PPL:70+Math.round(rnd()*25),PRD:55+Math.round(rnd()*35),PRC:50+Math.round(rnd()*35)},need:GATES.G1.roles,dec:{}});
+{const t=joinees.find(j=>j!==ME&&j.status==='phase2'&&(j.boss===ME.boss||j.mentor===ME.mentor))||joinees.find(j=>j!==ME&&j.status==='phase2');t.status='coaching2';coaching[t.id]={gate:'G2',score:68,mods:{PRI:60,PNL:75},need:GATES.G2.roles,dec:{}}}
+const otherShadow=[];{const t=joinees.find(j=>j!==ME&&j.mentor===ME.mentor);if(t)otherShadow.push({tid:t.id,day:24,ref:'CL-7Q2M',type:'Credit discussion',obs:'Mentor walked the CFO through the renewal terms and the DSCR covenant; client asked to relax the stock-statement frequency.',refl:'I would have explained why the covenant exists before discussing relaxation.',state:'pending'})}
+const outbox=[{t:'08:02',tpl:'Welcome',to:joinees.slice(0,3).map(j=>j.email),sub:'Welcome to the RM Onboarding Academy'}];
+const integrityStats={held:1,confirmed:1,voided:0};
 
 // ================= helpers =================
 const $=s=>document.querySelector(s);
@@ -274,24 +308,25 @@ function md(src){
 
 // ================= role + navigation =================
 const ROLES={
- joinee:{who:()=>`<b>${ME.name}</b><span class="mono muted">${ME.code} · Cluster 1</span><span class="small muted">Mentor 1 · Manager 1 · HR partner 1</span>`,
+ joinee:{who:()=>`<b>${ME.name}</b><span class="mono muted">${ME.code} · ${yrs(ME.exp)} experience</span><span class="small muted">Joins ${DEPTS[ME.dept]} after Day 30</span><span class="small muted">Boss ${coachOf(ME,'boss').name} · Mentor ${coachOf(ME,'mentor').name} (${DSHORT[coachOf(ME,'mentor').dept]}) · HR ${coachOf(ME,'hr').name}</span>`,
    pages:[['home','My day'],['programme','Training programme'],['tests','Assessments'],['shadow','Shadow log'],['chat','Ask the Academy']]},
- mentor:{who:()=>`<b>Mentor 1</b><span class="small muted">Senior RM · Cluster 1 · 50 trainees</span>`,
+ mentor:{who:()=>`<b>${VIEWER.mentor.name}</b><span class="small muted">${VIEWER.mentor.desig} · ${DSHORT[VIEWER.mentor.dept]} · ${VIEWER.mentor.region}</span><span class="small muted">Mentors joinees from other departments · ${load(VIEWER.mentor)}/${VIEWER.mentor.max}</span>`,
    pages:[['home','My trainees'],['queue','Coaching & checks'],['shadowrev','Shadow reviews'],['signoff','Day-30 sign-off']]},
- boss:{who:()=>`<b>Manager 1</b><span class="small muted">Reporting Boss · Cluster Head, Cluster 1</span>`,
+ boss:{who:()=>`<b>${VIEWER.boss.name}</b><span class="small muted">${VIEWER.boss.desig} · ${DSHORT[VIEWER.boss.dept]} · ${VIEWER.boss.region}</span><span class="small muted">${yrs(VIEWER.boss.exp)} experience · ${load(VIEWER.boss)}/${VIEWER.boss.max} joinees</span>`,
    pages:[['home','My team'],['queue','Coaching'],['signoff','Day-30 sign-off']]},
- hr:{who:()=>`<b>HR partner 1</b><span class="small muted">North · 200 trainees in 4 clusters</span>`,
-   pages:[['home','Programme health'],['queue','Coaching & reviews'],['integrity','Test integrity'],['people','People & capacity'],['emails','Email log'],['signoff','Day-30 sign-off']]}};
+ hr:{who:()=>`<b>${VIEWER.hr.name}</b><span class="small muted">HR Business Partner · ${VIEWER.hr.region}</span><span class="small muted">Cohort 2026-10 · ${joinees.length}/${CAPACITY} seats filled</span>`,
+   pages:[['home','Programme health'],['joinees','New joinees'],['queue','Coaching & reviews'],['integrity','Test integrity'],['people','People & capacity'],['emails','Email log'],['signoff','Day-30 sign-off']]}};
 let role='joinee'; const page={joinee:'home',mentor:'home',boss:'home',hr:'home'}; let progDay=null, openItem=null;
 
 function counts(r){
   const c={};
-  const queue=Object.values(coaching).filter(x=>x.need.includes(r)&&!x.dec[r]).length;
+  const queue=Object.entries(coaching).filter(([id,x])=>x.need.includes(r)&&!x.dec[r]&&inMyTeam(byId(+id),r)).length;
   const hold=(ME.status==='review'&&(r==='mentor'))?1:0;
   const hrrev=(r==='hr'&&ME.status==='hr_review')?1:0;
   c.queue=queue+hold+hrrev;
   c.signoff=(ME.status==='signoff'&&!ME.sign[r])?1:0;
   c.shadowrev=[...ME.shadow,...otherShadow].filter(s=>s.state==='pending').length;
+  c.joinees=0;
   return c}
 function render(){
   document.querySelectorAll('#roles button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.r===role));
@@ -371,21 +406,22 @@ V.joinee.chat=()=>`<div class="head"><div><span class="eyebrow">New Joinee</span
   <div class="panel chatpage"><div class="chat" id="pageChat" style="height:100%"></div></div>`;
 
 // ---------- coaches ----------
-function teamOf(r){return r==='hr'?trainees.filter(t=>t.hr===1):trainees.filter(t=>t.cluster===1)}
-function teamPanel(r){const team=teamOf(r);const st=[['Gate 1 cleared',t=>t.status==='phase2','var(--good)'],['Test due / learning',t=>['due','learning'].includes(t.status),'var(--accent)'],['In coaching',t=>t.status.startsWith('coaching'),'var(--warn)'],['Repeating',t=>t.status==='remediation','var(--crit)'],['Inactive',t=>t.status==='inactive','var(--crit)']];
-  return `<div class="hbars">${st.map(([l,f,c])=>{const v=team.filter(f).length;return `<div class="hbar"><span>${l}</span><div class="track"><i style="width:${v/team.length*100}%;background:${c}"></i></div><span class="num" style="text-align:right">${v}</span></div>`}).join('')}</div>`}
-function teamTable(r,n=12){const team=teamOf(r).slice().sort((a,b)=>(b.id===ME.id)-(a.id===ME.id)||b.risk-a.risk).slice(0,n);
-  return `<div class="tscroll"><table><thead><tr><th>Trainee</th>${r==='hr'?'<th>Cluster</th>':''}<th>Status</th><th class="r">Gate 1</th><th>Risk</th></tr></thead><tbody>${team.map(t=>`<tr><td>${esc(t.name)}<br><span class="mono muted">${t.code}</span></td>${r==='hr'?`<td>${t.cluster}</td>`:''}<td>${pill(t.id===ME.id?ME.status:t.status)}</td><td class="r num">${(t.id===ME.id?ME.scores.G1:t.g1)??'—'}</td><td>${riskPill(t.risk)}</td></tr>`).join('')}</tbody></table></div>`}
-function coachHome(r,title,sub){const c=counts(r);return `<div class="head"><div><span class="eyebrow">${ROLE_NAMES[r]}</span><h1>${title}</h1><p class="sub">${sub}</p></div></div>
-  <div class="grid g4"><div class="panel stat"><span class="eyebrow">Trainees</span><span class="v">${teamOf(r).length}</span><span class="d">${r==='hr'?'Clusters 1, 6, 11, 16':'Cluster 1'}</span></div>
+function teamOf(r){return r==='hr'?joinees.filter(j=>j.hr===VIEWER.hr.id):joinees.filter(j=>j[r]===VIEWER[r].id)}
+const ST_OF=t=>t===ME?ME.status:t.status;
+function teamPanel(r){const team=teamOf(r);const st=[['Gate 1 cleared',t=>['phase2','coaching2','signoff','certified'].includes(ST_OF(t))||(t===ME&&ME.phase>1),'var(--good)'],['Test due / learning',t=>['due','learning','testing'].includes(ST_OF(t)),'var(--accent)'],['In coaching',t=>ST_OF(t).startsWith('coaching')||ST_OF(t)==='review','var(--warn)'],['Repeating',t=>ST_OF(t)==='remediation','var(--crit)'],['Inactive',t=>ST_OF(t)==='inactive','var(--crit)']];
+  return `<div class="hbars">${st.map(([l,f,c])=>{const v=team.filter(f).length;return `<div class="hbar"><span>${l}</span><div class="track"><i style="width:${team.length?v/team.length*100:0}%;background:${c}"></i></div><span class="num" style="text-align:right">${v}</span></div>`}).join('')}</div>`}
+function teamTable(r,n=50){const team=teamOf(r).slice().sort((a,b)=>(b===ME)-(a===ME)||b.risk-a.risk).slice(0,n);
+  return `<div class="tscroll"><table><thead><tr><th>Trainee</th><th>Joins</th><th>Experience</th>${r!=='boss'?'<th>Reporting Boss</th>':''}${r!=='mentor'?'<th>Mentor</th>':''}<th>Status</th><th>Risk</th></tr></thead><tbody>${team.map(t=>`<tr><td>${esc(t.name)}<br><span class="mono muted">${t.code}</span></td><td>${DSHORT[t.dept]}</td><td class="num">${yrs(t.exp)}</td>${r!=='boss'?`<td>${esc(coachOf(t,'boss').name)}</td>`:''}${r!=='mentor'?`<td>${esc(coachOf(t,'mentor').name)}<br><span class="small muted">${DSHORT[coachOf(t,'mentor').dept]}</span></td>`:''}<td>${pill(ST_OF(t))}</td><td>${riskPill(t.risk)}</td></tr>`).join('')||'<tr><td colspan="7" class="muted">No joinees assigned yet.</td></tr>'}</tbody></table></div>`}
+function coachHome(r,title,sub){const c=counts(r),me=VIEWER[r],team=teamOf(r);return `<div class="head"><div><span class="eyebrow">${ROLE_NAMES[r]} · ${esc(me.name)}</span><h1>${title}</h1><p class="sub">${sub}</p></div></div>
+  <div class="grid g4"><div class="panel stat"><span class="eyebrow">Joinees assigned</span><span class="v">${team.length}</span><span class="d">limit ${me.max}</span></div>
    <div class="panel stat"><span class="eyebrow">Waiting for you</span><span class="v">${c.queue}</span><span class="d">coaching decisions${r==='mentor'?' and result checks':''}</span></div>
    <div class="panel stat"><span class="eyebrow">Sign-offs</span><span class="v">${c.signoff}</span><span class="d">Day 30</span></div>
-   <div class="panel stat"><span class="eyebrow">High risk</span><span class="v">${teamOf(r).filter(t=>t.risk>=60).length}</span><span class="d">early attrition signal</span></div></div>
-  <div class="grid g-main"><div class="panel"><h2>${r==='hr'?'Your 200 trainees':'Your 50 trainees'}</h2>${teamTable(r)}</div><div class="panel"><h2>Where they are</h2>${teamPanel(r)}${r==='mentor'?`<div class="callout">Mentor duties: one coaching day per trainee who misses Gate 1 or 2, result checks when a pass is held, rating shadow logs on Days 22–29, and the Day-30 viva.</div>`:r==='boss'?`<div class="callout">Reporting Boss duties: one coaching day at Gate 1 and Gate 2, and the Day-30 sign-off.</div>`:''}</div></div>`}
-V.mentor.home=()=>coachHome('mentor','My trainees','Everyone you mentor, most at-risk first. Coaching requests arrive here and by email.');
-V.boss.home=()=>coachHome('boss','My team','Your 50 new RMs in Cluster 1 and where each stands in the 30 days.');
+   <div class="panel stat"><span class="eyebrow">High risk</span><span class="v">${team.filter(t=>t.risk>=60).length}</span><span class="d">early attrition signal</span></div></div>
+  <div class="grid g-main"><div class="panel"><h2>${r==='mentor'?'Joinees you mentor':'Your team'}</h2>${teamTable(r)}</div><div class="panel"><h2>Where they are</h2>${teamPanel(r)}${r==='mentor'?`<div class="callout">You mentor joinees from departments other than your own (${DSHORT[me.dept]}). You give a coaching day at Gate 1 and 2, check held results, rate shadow logs on Days 22–29, and hold the Day-30 viva.</div>`:r==='boss'?`<div class="callout">Every joinee here joins your department, ${DSHORT[me.dept]}, after Day 30. You give a coaching day at Gate 1 and 2 and sign off on Day 30.</div>`:''}</div></div>`}
+V.mentor.home=()=>coachHome('mentor','My trainees','Joinees from other departments you mentor through the 30 days, most at-risk first.');
+V.boss.home=()=>coachHome('boss','My team','New RMs joining your department after Day 30, and where each stands in the programme.');
 
-function coachingCard(id,c,r){const t=trainees[id-1];const g=GATES[c.gate];
+function coachingCard(id,c,r){const t=byId(+id);const g=GATES[c.gate];
   return `<div class="panel tight inner"><div class="row between"><div><b>${esc(t.name)}</b> <span class="mono muted">${t.code}</span></div><span class="pill p-warn">${g.title.replace(/ Assessment/,'')} · ${c.score}%</span></div>
    ${modBars(c.mods)}
    <span class="small muted">Coaches: ${c.need.map(x=>`${ROLE_NAMES[x]} ${c.dec[x]?(c.dec[x].d==='pass'?'✓ pass':'↺ repeat'):x===r?'(you)':'pending'}`).join(' · ')}. Any single "repeat" assigns the ticked modules.</span>
@@ -406,7 +442,7 @@ function hrReviewCard(){return `<div class="panel tight inner hold"><div class="
   <p class="small">Did not clear the ${curGate().title} after two attempts and coaching. Meet the trainee and the reporting boss, then decide.</p>
   <label class="f">Decision notes (min. 30 characters)<textarea id="hrNotes"></textarea></label>
   <div class="row"><button class="btn btn-primary" id="hrExtend">Extend by one week, one more attempt</button><button class="btn" id="hrExit">Move to a different role / exit process</button></div></div>`}
-function queueView(r,title,sub){const mine=Object.entries(coaching).filter(([id,c])=>c.need.includes(r)&&!c.dec[r]);
+function queueView(r,title,sub){const mine=Object.entries(coaching).filter(([id,c])=>c.need.includes(r)&&!c.dec[r]&&inMyTeam(byId(+id),r));
   const extra=(r==='mentor'&&ME.status==='review'?verifyCard():'')+(r==='hr'&&ME.status==='hr_review'?hrReviewCard():'');
   return `<div class="head"><div><span class="eyebrow">${ROLE_NAMES[r]}</span><h1>${title}</h1><p class="sub">${sub}</p></div><span class="pill ${mine.length||extra?'p-warn':'p-good'}">${mine.length+(extra?1:0)} waiting</span></div>
   <div class="panel">${extra}${mine.map(([id,c])=>coachingCard(id,c,r)).join('')||(!extra?'<p class="muted">Nothing waiting. New requests arrive here and by email when a trainee misses a gate.</p>':'')}</div>`}
@@ -416,7 +452,7 @@ V.hr.queue=()=>queueView('hr','Coaching & reviews','One coaching day for every t
 
 V.mentor.shadowrev=()=>{const all=[...ME.shadow.map(s=>({...s,tid:ME.id,own:s})),...otherShadow.map(s=>({...s,own:s}))].filter(s=>s.state==='pending');
   return `<div class="head"><div><span class="eyebrow">Mentor · Days 22–29</span><h1>Shadow reviews</h1><p class="sub">Rate each logged interaction against the rubric. Trainees need 4 approved logs before the Day 30 assessment.</p></div></div>
-  <div class="panel">${all.length?all.map((s,ix)=>{const t=trainees[s.tid-1];return `<div class="panel tight inner"><div class="row between"><div><b>${esc(t.name)}</b> <span class="mono muted">${t.code} · ${esc(s.ref)}</span></div><span class="pill p-info">Day ${s.day} · ${esc(s.type)}</span></div>
+  <div class="panel">${all.length?all.map((s,ix)=>{const t=byId(s.tid);return `<div class="panel tight inner"><div class="row between"><div><b>${esc(t.name)}</b> <span class="mono muted">${t.code} · ${esc(s.ref)}</span></div><span class="pill p-info">Day ${s.day} · ${esc(s.type)}</span></div>
     <span class="small"><b>Observed:</b> ${esc(s.obs)}</span><span class="small"><b>Reflection:</b> ${esc(s.refl)}</span>
     <div class="grid g3">${COMPETENCIES.map((c,ci)=>`<label class="f">${c}<select id="rt_${ix}_${ci}"><option>5</option><option selected>4</option><option>3</option><option>2</option><option>1</option></select></label>`).join('')}</div>
     <label class="f">Feedback to the trainee<textarea id="fb_${ix}" style="min-height:60px"></textarea></label>
@@ -435,20 +471,78 @@ function signoffView(r){const ready=ME.status==='signoff';
 V.mentor.signoff=()=>signoffView('mentor'); V.boss.signoff=()=>signoffView('boss'); V.hr.signoff=()=>signoffView('hr');
 
 // ---------- HR ----------
-V.hr.home=()=>{const n=trainees.length,f=s=>trainees.filter(t=>t.status===s).length;
-  const risky=trainees.slice().sort((a,b)=>b.risk-a.risk).slice(0,8);
-  return `<div class="head"><div><span class="eyebrow">HR</span><h1>Programme health</h1><p class="sub">All 1,000 new joiners in the October cohort, on Day 15.</p></div></div>
-  <div class="grid g4"><div class="panel stat"><span class="eyebrow">New joiners</span><span class="v">${n.toLocaleString('en-IN')}</span><span class="d">20 clusters</span></div>
-   <div class="panel stat"><span class="eyebrow">Cleared Gate 1</span><span class="v">${f('phase2')}</span><span class="d">${Math.round(f('phase2')/n*100)}% first attempt</span></div>
+V.hr.home=()=>{const n=joinees.length,f=s=>joinees.filter(t=>ST_OF(t)===s).length;
+  const risky=joinees.slice().sort((a,b)=>b.risk-a.risk).slice(0,8);
+  return `<div class="head"><div><span class="eyebrow">HR · ${esc(VIEWER.hr.name)}</span><h1>Programme health</h1><p class="sub">Every joinee in Cohort 2026-10, across all five departments.</p></div></div>
+  <div class="grid g4"><div class="panel stat"><span class="eyebrow">Seats filled</span><span class="v">${n.toLocaleString('en-IN')}<span class="muted" style="font-size:1rem"> / ${CAPACITY.toLocaleString('en-IN')}</span></span><span class="d">${(CAPACITY-n).toLocaleString('en-IN')} seats free</span></div>
+   <div class="panel stat"><span class="eyebrow">Cleared Gate 1</span><span class="v">${f('phase2')+f('coaching2')}</span><span class="d">${n?Math.round((f('phase2')+f('coaching2'))/n*100):0}% of the cohort</span></div>
    <div class="panel stat"><span class="eyebrow">In coaching or repeat</span><span class="v">${f('coaching')+f('remediation')+f('coaching2')}</span><span class="d">3 working-day SLA</span></div>
-   <div class="panel stat"><span class="eyebrow">High attrition risk</span><span class="v">${trainees.filter(t=>t.risk>=60).length}</span><span class="d">talk to them this week</span></div></div>
+   <div class="panel stat"><span class="eyebrow">High attrition risk</span><span class="v">${joinees.filter(t=>t.risk>=60).length}</span><span class="d">talk to them this week</span></div></div>
   <div class="grid g-main"><div class="panel"><h2>Highest attrition risk</h2><p class="muted small">From test gaps, coaching, inactivity and pulse surveys. Recomputed nightly.</p>
-    <div class="tscroll"><table><thead><tr><th>Trainee</th><th>Cluster</th><th>Status</th><th>Risk</th></tr></thead><tbody>${risky.map(t=>`<tr><td>${esc(t.name)}<br><span class="mono muted">${t.code}</span></td><td>${t.cluster}</td><td>${pill(t.status)}</td><td>${riskPill(t.risk)}</td></tr>`).join('')}</tbody></table></div></div>
-   <div class="panel"><h2>Cohort status</h2><div class="hbars">${[['Gate 1 cleared',f('phase2'),'var(--good)'],['Test due',f('due'),'var(--accent)'],['In coaching',f('coaching')+f('coaching2'),'var(--warn)'],['Repeating',f('remediation'),'var(--crit)'],['Inactive 3+ days',f('inactive'),'var(--crit)']].map(([l,v,c])=>`<div class="hbar"><span>${l}</span><div class="track"><i style="width:${v/n*100}%;background:${c}"></i></div><span class="num" style="text-align:right">${v}</span></div>`).join('')}</div>
-    <div class="callout warn"><b>Coaching SLA:</b> 7 coaching decisions are past 3 working days and were escalated to the reporting boss.</div></div></div>`};
+    <div class="tscroll"><table><thead><tr><th>Trainee</th><th>Joins</th><th>HR partner</th><th>Status</th><th>Risk</th></tr></thead><tbody>${risky.map(t=>`<tr><td>${esc(t.name)}<br><span class="mono muted">${t.code}</span></td><td>${DSHORT[t.dept]}</td><td>${esc(coachOf(t,'hr').name)}</td><td>${pill(ST_OF(t))}</td><td>${riskPill(t.risk)}</td></tr>`).join('')}</tbody></table></div></div>
+   <div class="panel"><h2>By department</h2><div class="hbars">${DK.map(d=>{const v=joinees.filter(j=>j.dept===d).length;return `<div class="hbar"><span>${DSHORT[d]}</span><div class="track"><i style="width:${v/Math.max(1,...DK.map(x=>joinees.filter(j=>j.dept===x).length))*100}%;background:var(--accent)"></i></div><span class="num" style="text-align:right">${v}</span></div>`}).join('')}</div>
+    <p class="muted small">Each department has 4 Reporting Bosses with 50 places each, so up to 200 joinees per department.</p></div></div>`};
+
+// ---------- HR: New joinees ----------
+let jf={name:'',email:'',phone:'',dept:'MCB',region:'North',y:'4',m:'0',prevEmp:'',prevRole:'',start:'2026-10-05',boss:'',mentor:''}; let lastAdded=null, rosterQ='', rosterDept='', importReport=null;
+const SAMPLE_CSV=`full_name,email,department,region,experience_months,previous_employer,previous_role
+Meera Joshi,meera.joshi@bank.example,LCB,North,44,Axis Bank,Credit Analyst
+Farhan Siddiqui,farhan.s@bank.example,TSF,West,52,Yes Bank,Trade Finance Officer
+Ritika Bose,ritika.bose@bank.example,ECB,East,30,RBL Bank,Relationship Officer`;
+function jfExp(){return (+jf.y)*12+(+jf.m)}
+function previewAssign(){const exp=jfExp();const boss=jf.boss?PEOPLE[jf.boss]:pickCoach('boss',jf.dept,jf.region,true),mentor=jf.mentor?PEOPLE[jf.mentor]:pickCoach('mentor',jf.dept,jf.region,false),hr=HRS.find(h=>h.region===jf.region)||HRS[0];
+  const expOk=exp>=37&&exp<=59;
+  return `<div class="stack"><div class="row between"><span class="eyebrow">Assignment preview</span>${expOk?'<span class="pill p-good">Persona fits</span>':'<span class="pill p-crit">Experience outside 3–5 years</span>'}</div>
+   <div class="grid g3"><div class="out"><span class="eyebrow">Reporting Boss · same dept</span><b>${boss?esc(boss.name):'None free'}</b><span class="small muted">${boss?`${DSHORT[boss.dept]} · ${boss.region} · ${yrs(boss.exp)} · ${load(boss)}/${boss.max}`:''}</span></div>
+   <div class="out"><span class="eyebrow">Mentor · other dept</span><b>${mentor?esc(mentor.name):'None free'}</b><span class="small muted">${mentor?`${DSHORT[mentor.dept]} · ${mentor.region} · ${load(mentor)}/${mentor.max}`:''}</span></div>
+   <div class="out"><span class="eyebrow">HR partner · region</span><b>${esc(hr.name)}</b><span class="small muted">${hr.region} · ${load(hr)}/${hr.max}</span></div></div></div>`}
+V.hr.joinees=()=>{const n=joinees.length;
+  const list=joinees.filter(j=>(!rosterDept||j.dept===rosterDept)&&(!rosterQ||(j.name+' '+j.code+' '+j.email).toLowerCase().includes(rosterQ.toLowerCase()))).slice().reverse();
+  return `<div class="head"><div><span class="eyebrow">HR · Cohort 2026-10 starts 5 Oct 2026</span><h1>New joinees</h1><p class="sub">Add people as offers are accepted. Each joinee gets a Reporting Boss from the department they join, a Mentor from a different department, and the HR partner for their region.</p></div></div>
+  <div class="panel tight"><div class="row between"><b>Seats</b><span class="num">${n.toLocaleString('en-IN')} of ${CAPACITY.toLocaleString('en-IN')} filled · ${(CAPACITY-n).toLocaleString('en-IN')} free</span></div><div class="bar"><i style="width:${n/CAPACITY*100}%"></i></div></div>
+  <div class="grid g-main">
+   <div class="panel"><h2>Add a new joinee</h2>
+    <div class="grid g2">
+     <label class="f">Full name<input id="jf_name" value="${esc(jf.name)}" autocomplete="off"></label>
+     <label class="f">Work email<input id="jf_email" value="${esc(jf.email)}" autocomplete="off" placeholder="name@bank.example"></label>
+     <label class="f">Mobile<input id="jf_phone" value="${esc(jf.phone)}" inputmode="tel"></label>
+     <label class="f">Start date<input id="jf_start" type="date" value="${jf.start}"></label>
+     <label class="f">Department they join after Day 30<select id="jf_dept">${DK.map(d=>`<option value="${d}" ${jf.dept===d?'selected':''}>${DEPTS[d]}</option>`).join('')}</select></label>
+     <label class="f">Region<select id="jf_region">${REGIONS.map(r=>`<option ${jf.region===r?'selected':''}>${r}</option>`).join('')}</select></label>
+     <label class="f">Total experience: years<select id="jf_y">${[2,3,4,5].map(y=>`<option ${+jf.y===y?'selected':''}>${y}</option>`).join('')}</select></label>
+     <label class="f">and months<select id="jf_m">${Array.from({length:12},(_,m)=>`<option ${+jf.m===m?'selected':''}>${m}</option>`).join('')}</select></label>
+     <label class="f">Previous employer<input id="jf_prevEmp" value="${esc(jf.prevEmp)}"></label>
+     <label class="f">Previous role<input id="jf_prevRole" value="${esc(jf.prevRole)}"></label>
+     <label class="f">Reporting Boss<select id="jf_boss"><option value="">Assign automatically</option>${BOSSES.filter(b=>b.dept===jf.dept).map(b=>`<option value="${b.id}" ${jf.boss===b.id?'selected':''} ${load(b)>=b.max?'disabled':''}>${esc(b.name)} · ${b.region} · ${load(b)}/${b.max}</option>`).join('')}</select></label>
+     <label class="f">Mentor (other departments only)<select id="jf_mentor"><option value="">Assign automatically</option>${MENTORS.filter(m=>m.dept!==jf.dept).map(m=>`<option value="${m.id}" ${jf.mentor===m.id?'selected':''} ${load(m)>=m.max?'disabled':''}>${esc(m.name)} · ${DSHORT[m.dept]} · ${m.region} · ${load(m)}/${m.max}</option>`).join('')}</select></label>
+    </div>
+    <p class="small muted">New joinees must have more than 3 and less than 5 years of experience (3 years 1 month to 4 years 11 months).</p>
+    <div id="jf_preview">${previewAssign()}</div>
+    <div class="row"><button class="btn btn-primary" id="jfAdd">Add joinee</button><button class="btn" id="jfReset">Clear form</button></div>
+    ${lastAdded?`<div class="callout"><b>${esc(lastAdded.name)}</b> (${lastAdded.code}) added. Boss ${esc(coachOf(lastAdded,'boss').name)} (${DSHORT[lastAdded.dept]}), Mentor ${esc(coachOf(lastAdded,'mentor').name)} (${DSHORT[coachOf(lastAdded,'mentor').dept]}), HR ${esc(coachOf(lastAdded,'hr').name)}. Welcome and assignment emails sent.</div>`:''}
+   </div>
+   <div class="panel"><h2>Add many at once</h2><p class="small muted">Paste rows or choose a CSV file with these columns. Each row is checked on its own; valid rows are added and the rest are listed with the reason.</p>
+    <textarea id="csvText" style="min-height:130px;font-family:var(--f-mono);font-size:.75rem">${esc(SAMPLE_CSV)}</textarea>
+    <div class="row"><button class="btn btn-primary" id="csvImport">Import rows</button><label class="btn" for="csvFile" style="display:inline-block">Choose CSV file</label><input type="file" id="csvFile" accept=".csv,text/csv" hidden><button class="btn" id="add10">Add 10 sample joinees</button></div>
+    ${importReport?`<div class="stack"><span class="pill ${importReport.bad.length?'p-warn':'p-good'}">${importReport.ok} added · ${importReport.bad.length} not added</span>${importReport.bad.map(b=>`<span class="small"><b>Row ${b.row}</b> ${esc(b.email||'')}: ${esc(b.err)}</span>`).join('')}</div>`:''}
+   </div>
+  </div>
+  <div class="panel"><div class="panel-h"><h2>Roster</h2><div class="row"><input id="rosterQ" placeholder="Search name, code or email" value="${esc(rosterQ)}" style="border:1px solid var(--line-strong);border-radius:var(--r-md);padding:6px 10px;background:var(--surface)"><select id="rosterDept" style="border:1px solid var(--line-strong);border-radius:var(--r-md);padding:6px 10px;background:var(--surface)"><option value="">All departments</option>${DK.map(d=>`<option value="${d}" ${rosterDept===d?'selected':''}>${DSHORT[d]}</option>`).join('')}</select></div></div>
+   <div class="tscroll"><table><thead><tr><th>Joinee</th><th>Joins</th><th>Experience</th><th>Previous</th><th>Reporting Boss</th><th>Mentor</th><th>HR</th><th>Status</th><th></th></tr></thead><tbody>
+   ${list.map(j=>`<tr><td>${esc(j.name)}<br><span class="mono muted">${j.code}</span></td><td>${DSHORT[j.dept]}<br><span class="small muted">${j.region}</span></td><td class="num">${yrs(j.exp)}</td><td class="small">${esc(j.prevEmp)}<br><span class="muted">${esc(j.prevRole)}</span></td><td>${esc(coachOf(j,'boss').name)}</td><td>${esc(coachOf(j,'mentor').name)}<br><span class="small muted">${DSHORT[coachOf(j,'mentor').dept]}</span></td><td>${esc(coachOf(j,'hr').name)}</td><td>${j.added?'<span class="pill p-info">Joining</span>':pill(ST_OF(j))}</td><td>${j.added?`<button class="btn btn-sm" data-withdraw="${j.id}">Withdraw</button>`:''}</td></tr>`).join('')||'<tr><td colspan="9" class="muted">No joinees match.</td></tr>'}
+   </tbody></table></div><p class="small muted">Withdraw is available until Day 1, for offers that are declined; it frees the seat.</p></div>`};
+function parseCSV(t){const rows=[];let row=[],f='',q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}else if(c==='"')q=true;else if(c===','){row.push(f);f=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;row.push(f);rows.push(row);row=[];f=''}else f+=c}if(f||row.length){row.push(f);rows.push(row)}return rows.filter(r=>r.some(x=>x.trim()))}
+function importCSV(text){const rows=parseCSV(text.trim());if(!rows.length)return toast('Paste at least a header row and one joinee.');
+  const h=rows[0].map(x=>x.trim().toLowerCase());const need=['full_name','email','department','region','experience_months'];const miss=need.filter(k=>!h.includes(k));
+  if(miss.length)return toast('Missing columns: '+miss.join(', '));
+  const rep={ok:0,bad:[]};rows.slice(1).forEach((r,i)=>{const g=k=>(r[h.indexOf(k)]??'').trim();
+    try{createJoinee({name:g('full_name'),email:g('email'),dept:g('department'),region:g('region').replace(/^\w/,c=>c.toUpperCase()),exp:g('experience_months'),prevEmp:g('previous_employer'),prevRole:g('previous_role'),start:g('start_date')||undefined,added:true});rep.ok++}
+    catch(e){rep.bad.push({row:i+2,email:g('email'),err:e.message})}});
+  importReport=rep;if(rep.ok)mail('Welcome',['('+rep.ok+' joinees)'],`Welcome and assignment emails for ${rep.ok} new joinees`);
+  toast(`${rep.ok} added, ${rep.bad.length} not added.`);render()}
 
 V.hr.integrity=()=>`<div class="head"><div><span class="eyebrow">HR</span><h1>Test integrity</h1><p class="sub">Unusual test activity never fails anyone on its own. It holds a pass until the mentor confirms it in a short conversation.</p></div></div>
-  <div class="grid g4">${[['Results held',integrityStats.held+(ME.status==='review'?1:0),'2.3% of attempts'],['Confirmed after viva',integrityStats.confirmed,'result stands'],['Voided',integrityStats.voided,'supervised re-sit + conduct review'],['Awaiting mentor',2+(ME.status==='review'?1:0),'SLA 2 working days']].map(([l,v,d])=>`<div class="panel stat"><span class="eyebrow">${l}</span><span class="v">${v}</span><span class="d">${d}</span></div>`).join('')}</div>
+  <div class="grid g4">${[['Results held',integrityStats.held+(ME.status==='review'?1:0),'this cohort'],['Confirmed after viva',integrityStats.confirmed,'result stands'],['Voided',integrityStats.voided,'supervised re-sit + conduct review'],['Awaiting mentor',(ME.status==='review'?1:0),'SLA 2 working days']].map(([l,v,d])=>`<div class="panel stat"><span class="eyebrow">${l}</span><span class="v">${v}</span><span class="d">${d}</span></div>`).join('')}</div>
   <div class="grid g2"><div class="panel"><h2>Signals this cohort</h2><div class="tscroll"><table><thead><tr><th>Signal</th><th class="r">Attempts</th><th>Usually means</th></tr></thead><tbody>
     <tr><td>Left the test screen 2+ times</td><td class="r num">31</td><td>Looking something up, or an interruption</td></tr>
     <tr><td>Copy or paste</td><td class="r num">9</td><td>Question copied into another tool</td></tr>
@@ -461,11 +555,18 @@ V.hr.integrity=()=>`<div class="head"><div><span class="eyebrow">HR</span><h1>Te
     <li>Gates run in scheduled windows in a locked-down browser on bank laptops; re-sits after a void are supervised in person.</li>
     <li>The mentor cannot sign off Day 30 without a viva score of 3 or more.</li></ul></div></div>`;
 
-V.hr.people=()=>{const rows=Array.from({length:20},(_,k)=>{const cl=k+1,t=trainees.filter(x=>x.cluster===cl);return {cl,m:'Mentor '+cl,b:'Manager '+cl,h:'HR partner '+(1+k%5),n:t.length,co:t.filter(x=>x.status.startsWith('coaching')).length,re:t.filter(x=>x.status==='remediation').length}});
-  return `<div class="head"><div><span class="eyebrow">HR</span><h1>People & capacity</h1><p class="sub">Who looks after whom, and whether coaches have the days to do it.</p></div></div>
-  <div class="grid g4"><div class="panel stat"><span class="eyebrow">New joiners</span><span class="v">1,000</span><span class="d">50 per cluster</span></div><div class="panel stat"><span class="eyebrow">Mentors</span><span class="v">20</span><span class="d">1 : 50</span></div><div class="panel stat"><span class="eyebrow">Reporting bosses</span><span class="v">20</span><span class="d">1 : 50</span></div><div class="panel stat"><span class="eyebrow">HR partners</span><span class="v">5</span><span class="d">1 : 200</span></div></div>
-  <div class="callout warn"><b>Capacity.</b> With 1,000 joiners in one wave, Gate 1 coaching needs about ${Math.round(rows.reduce((a,r)=>a+r.co,0)/20)} days from each mentor and boss and ${Math.round(rows.reduce((a,r)=>a+r.co,0)/5)} from each HR partner in the same week, and 50 trainees would shadow one mentor. Four monthly waves of 250 bring shadowing to about 12 per mentor. HR can delegate its coaching day to a trained L&D coach while keeping the decision.</div>
-  <div class="panel"><div class="tscroll"><table><thead><tr><th>Cluster</th><th>Mentor</th><th>Reporting boss</th><th>HR partner</th><th class="r">Trainees</th><th class="r">In coaching</th><th class="r">Repeating</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.cl}</td><td>${r.m}</td><td>${r.b}</td><td>${r.h}</td><td class="r num">${r.n}</td><td class="r num">${r.co}</td><td class="r num">${r.re}</td></tr>`).join('')}</tbody></table></div></div>`};
+V.hr.people=()=>{const n=joinees.length;
+  const tbl=(rows,cols)=>`<div class="tscroll"><table><thead><tr>${cols.map(c=>`<th ${c[2]?'class="r"':''}>${c[0]}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td ${c[2]?'class="r num"':''}>${c[1](r)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  const cap=c=>`${load(c)}/${c.max}`;
+  return `<div class="head"><div><span class="eyebrow">HR</span><h1>People & capacity</h1><p class="sub">Who looks after the joinees, their experience, and how many places each has left.</p></div></div>
+  <div class="grid g4"><div class="panel stat"><span class="eyebrow">New joinees</span><span class="v">${n}</span><span class="d">of ${CAPACITY.toLocaleString('en-IN')} seats · 3–5 years' experience</span></div>
+   <div class="panel stat"><span class="eyebrow">Reporting Bosses</span><span class="v">20</span><span class="d">4 per department · 10–15 years</span></div>
+   <div class="panel stat"><span class="eyebrow">Mentors</span><span class="v">20</span><span class="d">always from another department</span></div>
+   <div class="panel stat"><span class="eyebrow">HR partners</span><span class="v">5</span><span class="d">one per region · 200 each</span></div></div>
+  <div class="callout"><b>Assignment rules.</b> A joinee's Reporting Boss is in the department they join after Day 30, so the boss can coach on that product and owns the reporting line. The Mentor comes from a different department: they bring a wider view of the bank and never assess a future member of their own team. Both are picked from the joinee's region first, then by lowest load. At full capacity the 20 mentors and 20 bosses carry 50 each, and each department can take up to 200 joinees.</div>
+  <div class="panel"><h2>Reporting Bosses</h2>${tbl(BOSSES,[['Name',b=>`${esc(b.name)}<br><span class="small muted">${b.desig}</span>`],['Department',b=>DSHORT[b.dept]],['Region',b=>b.region],['Experience',b=>yrs(b.exp),1],['Joinees',cap,1]])}</div>
+  <div class="panel"><h2>Mentors</h2>${tbl(MENTORS,[['Name',m=>`${esc(m.name)}<br><span class="small muted">${m.desig}</span>`],['Own department',m=>DSHORT[m.dept]],['Mentors joinees from',m=>{const ds=[...new Set(joinees.filter(j=>j.mentor===m.id).map(j=>DSHORT[j.dept]))];return ds.join(', ')||'<span class="muted">—</span>'}],['Region',m=>m.region],['Experience',m=>yrs(m.exp),1],['Joinees',cap,1]])}</div>
+  <div class="panel"><h2>HR partners</h2>${tbl(HRS,[['Name',h=>esc(h.name)],['Region',h=>h.region],['Joinees',cap,1]])}</div>`};
 
 V.hr.emails=()=>`<div class="head"><div><span class="eyebrow">HR</span><h1>Email log</h1><p class="sub">Every automatic email the platform sends. Scores never appear in subject lines.</p></div></div>
   <div class="panel stack">${outbox.map(m=>`<div class="mail"><div class="row between"><b>${esc(m.tpl)}</b><span class="mono muted">${m.t}</span></div><span>${esc(m.sub)}</span><span class="to">To: ${m.to.map(esc).join(', ')}</span></div>`).join('')}</div>`;
@@ -550,22 +651,23 @@ function finishSecure(){clearInterval(clockH);ME.testOpen=false;document.body.cl
 function submit(gk,score,mods,integ={score:0,flags:{}},ans=[]){
   const g=GATES[gk];ME.status='learning';ME.attempts[gk]++;ME.scores[gk]=Math.max(ME.scores[gk]??0,score);if(gk==='G1')ME.g1=score;
   if(score>=g.pass&&integ.score>=40){ME.status='review';ME.review={gate:gk,score,integ,ans:ans.length?ans:CONTENT.bank[g.bank].slice(0,4).map(q=>({q,choice:q.answer,ms:4000}))};
-    mail('Verification needed',['mentor1@bank.example','cc hr1@bank.example'],`Verification needed: ${ME.name} (${ME.code})`);mail('Result being confirmed',['trainee2@bank.example'],'Your assessment result is being confirmed');
+    mail('Verification needed',[coachOf(ME,'mentor').email,'cc '+coachOf(ME,'hr').email],`Verification needed: ${ME.name} (${ME.code})`);mail('Result being confirmed',[ME.email],'Your assessment result is being confirmed');
     toast(`Scored ${score}%. Result held for a short check by your mentor.`)}
   else if(score>=g.pass){passGate(gk,'score');toast(`Scored ${score}%. ${g.final?'Sign-off requested.':'Next phase unlocked.'}`)}
-  else if(ME.attempts[gk]>=MAX_ATTEMPTS){ME.status='hr_review';mail('HR review required',['hr1@bank.example','manager1@bank.example'],`HR review: ${ME.name} (${ME.code}) used two attempts`);toast(`Scored ${score}%. Two attempts used; HR will meet you.`)}
+  else if(ME.attempts[gk]>=MAX_ATTEMPTS){ME.status='hr_review';mail('HR review required',[coachOf(ME,'hr').email,coachOf(ME,'boss').email],`HR review: ${ME.name} (${ME.code}) used two attempts`);toast(`Scored ${score}%. Two attempts used; HR will meet you.`)}
   else{ME.status='coaching';coaching[ME.id]={gate:gk,score,mods,need:g.roles,dec:{},flags:integ.flags};
-    mail('Coaching required',g.roles.map(r=>({mentor:'mentor1',boss:'manager1',hr:'hr1'}[r]+'@bank.example')),`Action required: 1-day coaching for ${ME.name} (${ME.code})`);
-    mail('Coaching scheduled',['trainee2@bank.example'],'Your personalised coaching sessions are scheduled');
+    mail('Coaching required',g.roles.map(r=>coachOf(ME,r).email),`Action required: 1-day coaching for ${ME.name} (${ME.code})`);
+    mail('Coaching scheduled',[ME.email],'Your personalised coaching sessions are scheduled');
     toast(`Scored ${score}%. Email sent to ${g.roles.map(r=>ROLE_NAMES[r]).join(', ')}.`)}
   render()}
 function passGate(gk,via){const g=GATES[gk];delete coaching[ME.id];
-  if(g.final){ME.status='signoff';mail('Sign-off needed',['mentor1@bank.example','manager1@bank.example','hr1@bank.example'],`Sign-off needed: ${ME.name} passed Day 30 certification`);return}
+  if(g.final){ME.status='signoff';mail('Sign-off needed',[coachOf(ME,'mentor').email,coachOf(ME,'boss').email,coachOf(ME,'hr').email],`Sign-off needed: ${ME.name} passed Day 30 certification`);return}
   ME.phase++;ME.day=ME.phase===2?16:22;ME.status='learning';progDay=ME.day;openItem=null;
-  mail('Next phase unlocked',['trainee2@bank.example'],via==='coach'?'Next phase unlocked on your coaches\' recommendation':'Next phase unlocked')}
+  mail('Next phase unlocked',[ME.email],via==='coach'?'Next phase unlocked on your coaches\' recommendation':'Next phase unlocked')}
 
 // ================= actions =================
-document.getElementById('main').addEventListener('click',e=>{const t=e.target;const el=t.closest('[data-go],[data-open],[data-day],[data-done],[data-dec],[data-rate]');
+document.getElementById('main').addEventListener('click',e=>{const t=e.target;const el=t.closest('[data-go],[data-open],[data-day],[data-done],[data-dec],[data-rate],[data-withdraw]');
+  if(el?.dataset.withdraw){const j=byId(+el.dataset.withdraw);joinees.splice(joinees.indexOf(j),1);toast(`${j.name} withdrawn. Seat freed.`);render();return}
   if(el?.dataset.go){page.joinee=el.dataset.go;if(el.dataset.go==='programme'){progDay=ME.day;openItem=null}render();scrollTo(0,0);return}
   if(el?.dataset.open){const [d,i]=el.dataset.open.split('-').map(Number);page.joinee='programme';progDay=d;openItem={d,i,it:CONTENT.days[d].items[i]};render();scrollTo(0,0);return}
   if(el?.dataset.day){progDay=+el.dataset.day;openItem=null;render();return}
@@ -574,6 +676,12 @@ document.getElementById('main').addEventListener('click',e=>{const t=e.target;co
   if(el?.dataset.rate!=null){rateShadow(+el.dataset.rate);return}
   switch(t.id){
    case 'backDay':openItem=null;render();return;
+   case 'jfAdd':{try{const j=createJoinee({name:jf.name,email:jf.email,phone:jf.phone,dept:jf.dept,region:jf.region,exp:jfExp(),prevEmp:jf.prevEmp,prevRole:jf.prevRole,start:jf.start,boss:jf.boss||null,mentor:jf.mentor||null,added:true});
+       lastAdded=j;mail('Welcome',[j.email],'Welcome to the RM Onboarding Academy');mail('New joinee assigned',[coachOf(j,'mentor').email,coachOf(j,'boss').email,'cc '+coachOf(j,'hr').email],`New joinee assigned: ${j.name} (${j.code})`);
+       jf={...jf,name:'',email:'',phone:'',prevEmp:'',prevRole:'',boss:'',mentor:''};toast(`${j.name} added as ${j.code}.`);render()}catch(err){toast(err.message)}return}
+   case 'jfReset':jf={name:'',email:'',phone:'',dept:'MCB',region:'North',y:'4',m:'0',prevEmp:'',prevRole:'',start:'2026-10-05',boss:'',mentor:''};lastAdded=null;render();return;
+   case 'csvImport':importCSV($('#csvText').value);return;
+   case 'add10':{const before=joinees.length;for(let k=0;k<10&&joinees.length<CAPACITY;k++){const i=joinees.length+100+k;try{createJoinee({name:FN[(i*3)%20]+' '+LN[(i*11)%15],email:`joinee${nextCode}@bank.example`,dept:DK[i%5],region:REGIONS[(i*7)%5],exp:37+(i*13)%23,prevEmp:PREV_E[i%6],prevRole:PREV_R[i%5],added:true})}catch(e){}}toast(`${joinees.length-before} sample joinees added and assigned.`);render();return}
    case 'startQuiz':quiz={stage:'declare'};$('#assessPanel').innerHTML=assessHTML();return;
    case 'beginQuiz':beginSecure();return;
    case 'nextQ':{const c=document.querySelector('input[name="cur"]:checked');saveAnswer(c?+c.dataset.o:null);return}
@@ -582,7 +690,7 @@ document.getElementById('main').addEventListener('click',e=>{const t=e.target;co
    case 'flagFast':if(ME.status!=='learning')return toast('The assessment is not open right now.');submit(curGate().key,90,{GOV:83,PPL:100,PRD:100,PRC:83},{score:60,flags:{focus_lost:3,copy_paste:1}});return;
    case 'passFast':if(ME.status!=='learning')return toast('The assessment is not open right now.');if(curGate().final&&ME.shadow.filter(s=>s.state==='approved').length<4)demoShadow(true);submit(curGate().key,88,{PRI:90,PNL:85});return;
    case 'finishRem':ME.repeat.forEach(m=>itemsFor(1).concat(itemsFor(2)).filter(x=>CONTENT.days[x.d].m===m).forEach(x=>done.add(x.key)));ME.status='learning';ME.repeat=null;toast(`Refresher complete. Attempt 2 of 2 is open.`);render();return;
-   case 'pulseSend':mail('Pulse received',['hr1@bank.example'],`Pulse from ${ME.code} (HR only)`);toast('Thanks. Your HR partner sees this, not your mentor or boss.');return;
+   case 'pulseSend':mail('Pulse received',[coachOf(ME,'hr').email],`Pulse from ${ME.code} (HR only)`);toast('Thanks. Your HR partner sees this, not your mentor or boss.');return;
    case 'shSave':{const ref=$('#sh_ref').value.trim(),obs=$('#sh_obs').value.trim();
      if(/\b[A-Z]{5}\d{4}[A-Z]\b|\b\d{9,18}\b|\b\d{4}\s?\d{4}\s?\d{4}\b/.test(ref+' '+obs))return toast('Remove PAN, Aadhaar or account numbers. Use the masked client reference only.');
      if(obs.length<30)return toast('Describe the interaction in at least 30 characters.');
@@ -591,27 +699,31 @@ document.getElementById('main').addEventListener('click',e=>{const t=e.target;co
    case 'confirmRes':case 'voidRes':{const n=($('#vivaNotes')?.value||'').trim();if(n.length<30){toast('Add at least 30 characters describing the conversation.');return}
      const gk=ME.review.gate;
      if(t.id==='confirmRes'){ME.review=null;passGate(gk,'score');integrityStats.confirmed++;toast(`Result confirmed for ${first(ME.name)}.`)}
-     else{ME.review=null;ME.status='learning';ME.supervised=true;ME.attempts[gk]--;delete ME.scores[gk];integrityStats.voided++;mail('Result voided',['hr1@bank.example','manager1@bank.example'],`Assessment result voided: ${ME.name} (${ME.code})`);toast('Result voided. Supervised re-sit booked; HR notified for a conduct review.')}
+     else{ME.review=null;ME.status='learning';ME.supervised=true;ME.attempts[gk]--;delete ME.scores[gk];integrityStats.voided++;mail('Result voided',[coachOf(ME,'hr').email,coachOf(ME,'boss').email],`Assessment result voided: ${ME.name} (${ME.code})`);toast('Result voided. Supervised re-sit booked; HR notified for a conduct review.')}
      integrityStats.held++;render();return}
    case 'hrExtend':case 'hrExit':{if(($('#hrNotes')?.value||'').trim().length<30)return toast('Add at least 30 characters of decision notes.');
      if(t.id==='hrExtend'){ME.attempts[curGate().key]=MAX_ATTEMPTS-1;ME.status='learning';toast('Extended by one week with one more attempt.')}else{ME.status='hr_review';toast('Recorded. HR will start the role-change or exit process.')}render();return}
    case 'saveViva':ME.viva=+$('#finViva').value;if(ME.viva<3){toast('Viva below 3: sign-off is blocked. Plan further coaching.');}else toast('Viva recorded.');render();return;
-   case 'signYes':ME.sign[role]=true;if(['mentor','boss','hr'].every(r=>ME.sign[r])){ME.status='certified';ME.day=30;mail('Certified',['trainee2@bank.example','mentor1@bank.example','manager1@bank.example','hr1@bank.example'],`${ME.name} is now a certified Relationship Manager`);toast(`${first(ME.name)} is certified.`)}else toast('Signed. Waiting for the other signatories.');render();return;
+   case 'signYes':ME.sign[role]=true;if(['mentor','boss','hr'].every(r=>ME.sign[r])){ME.status='certified';ME.day=30;mail('Certified',[ME.email,coachOf(ME,'mentor').email,coachOf(ME,'boss').email,coachOf(ME,'hr').email],`${ME.name} is now a certified Relationship Manager`);toast(`${first(ME.name)} is certified.`)}else toast('Signed. Waiting for the other signatories.');render();return;
    case 'signNo':ME.status='hr_review';toast('Referred to HR review.');render();return;
   }
   if(role==='joinee'&&page.joinee==='programme'&&t.closest('.calc'))return;
 });
-document.getElementById('main').addEventListener('input',e=>{if(e.target.id==='honour')$('#beginQuiz').disabled=!e.target.checked;if(e.target.name==='cur')$('#nextQ').disabled=false;if(e.target.id?.startsWith('c_')&&openItem?.it.ref)CALC[openItem.it.ref.slice(5)].run()});
+document.getElementById('main').addEventListener('change',e=>{const id=e.target.id||'';
+  if(id.startsWith('jf_')){const k=id.slice(3);jf[k]=e.target.value;if(k==='dept'){jf.boss='';jf.mentor=''}if(['dept','region','y','m','boss','mentor'].includes(k))render();}
+  if(id==='rosterDept'){rosterDept=e.target.value;render()}
+  if(id==='csvFile'&&e.target.files[0]){const r=new FileReader();r.onload=()=>{$('#csvText').value=r.result;toast('File loaded. Check the rows, then Import rows.')};r.readAsText(e.target.files[0])}});
+document.getElementById('main').addEventListener('input',e=>{const id=e.target.id||'';if(id.startsWith('jf_')&&e.target.tagName==='INPUT')jf[id.slice(3)]=e.target.value;if(id==='rosterQ'){rosterQ=e.target.value;const pos=e.target.selectionStart;render();const q=$('#rosterQ');q.focus();q.setSelectionRange(pos,pos)}if(e.target.id==='honour')$('#beginQuiz').disabled=!e.target.checked;if(e.target.name==='cur')$('#nextQ').disabled=false;if(e.target.id?.startsWith('c_')&&openItem?.it.ref)CALC[openItem.it.ref.slice(5)].run()});
 
 function decide(id,r,d){const c=coaching[id],notes=($('#n_'+id)?.value||'').trim();
   if(notes.length<30){toast('Add at least 30 characters of notes before recording a decision.');$('#n_'+id)?.focus();return}
   const mods=Object.keys(c.mods).filter(m=>$(`#m_${id}_${m}`)?.checked);c.dec[r]={d,notes,mods:d==='repeat'?mods:[]};
-  const pending=c.need.filter(x=>!c.dec[x]);const t=trainees[id-1];
+  const pending=c.need.filter(x=>!c.dec[x]);const t=byId(+id);
   if(pending.length){toast(`Recorded. Waiting for ${pending.map(x=>ROLE_NAMES[x]).join(' and ')}.`);render();return}
   if(c.need.some(x=>c.dec[x].d==='repeat')){const rep=[...new Set(c.need.flatMap(x=>c.dec[x].mods))];const list=rep.length?rep:Object.keys(c.mods).filter(m=>c.mods[m]<70);
     if(id===ME.id){ME.status='remediation';ME.repeat=list;list.forEach(m=>itemsFor(1).concat(itemsFor(2)).filter(x=>CONTENT.days[x.d].m===m).forEach(x=>done.delete(x.key)))}else t.status='remediation';
-    delete coaching[id];mail('Refresher assigned',[`trainee${id}@bank.example`],'Refresher modules assigned');toast(`All coaches decided: ${first(t.name)} repeats ${list.join(', ')}.`)}
-  else{if(id===ME.id)passGate(c.gate,'coach');else{t.status='phase2';delete coaching[id];mail('Next phase unlocked',[`trainee${id}@bank.example`],'Next phase unlocked on coaches\' recommendation')}toast(`All coaches passed ${first(t.name)}. Next phase unlocked.`)}
+    delete coaching[id];mail('Refresher assigned',[byId(id).email],'Refresher modules assigned');toast(`All coaches decided: ${first(t.name)} repeats ${list.join(', ')}.`)}
+  else{if(id===ME.id)passGate(c.gate,'coach');else{t.status='phase2';delete coaching[id];mail('Next phase unlocked',[byId(id).email],'Next phase unlocked on coaches\' recommendation')}toast(`All coaches passed ${first(t.name)}. Next phase unlocked.`)}
   render()}
 function rateShadow(ix){const s=V.mentor._pending()[ix];const r=COMPETENCIES.map((_,ci)=>+$(`#rt_${ix}_${ci}`).value);s.own.state='approved';s.own.avg=r.reduce((a,b)=>a+b,0)/r.length;s.own.fb=$('#fb_'+ix).value.trim();toast(`Approved with an average rating of ${s.own.avg.toFixed(1)}.`);render()}
 function demoShadow(approve){const S=[['Client visit','Mentor ran a discovery meeting with the CFO of a ₹300 Cr pharma distributor; mapped cash cycle and a payables pain point.'],['Credit discussion','Renewal discussion; DSCR dropped to 1.15x. Mentor explained the covenant and agreed a quarterly stock-statement plan.'],['KYC review','Periodic KYC for a high-risk trading client. Found a new 12% shareholder; mentor paused the renewal until BO documents arrived.'],['Pricing discussion','Client asked for 40 bps below card. Mentor offered CMS and payroll to lift relationship RoE instead.']];

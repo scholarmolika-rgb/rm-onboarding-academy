@@ -72,53 +72,72 @@ insert into assessments(code, title, unlocks_phase, day_no, pass_pct, question_c
    array['mentor','reporting_manager','hr']::app_role[]);
 
 -- ---------- Cohort & people -------------------------------------------
-insert into cohorts(id, name, start_date, holidays) values
- ('00000000-0000-0000-0000-000000000001','Cohort 2026-10 (Wave 1)','2026-10-05',
-  array['2026-10-20','2026-11-09','2026-11-10']::date[]);   -- sample bank holidays
+-- One cohort with 1,000 seats. It starts with a small demo intake so HR can
+-- test adding joinees from the New Joinees screen (or hr_create_joinee()).
+insert into cohorts(id, name, start_date, holidays, capacity) values
+ ('00000000-0000-0000-0000-000000000001','Cohort 2026-10','2026-10-05',
+  array['2026-10-20','2026-11-09','2026-11-10']::date[], 1000);
 
--- 5 HR business partners
-insert into profiles(employee_code, full_name, email, role, region)
+-- 5 HR business partners, one per region (200 joinees each at full capacity)
+insert into profiles(employee_code, full_name, email, role, region, designation, max_trainees)
 select 'HR' || lpad(i::text,3,'0'),
        (array['Anita Rao','Farhan Qureshi','Meera Pillai','Sandeep Kohli','Lavanya Iyer'])[i],
        'hr' || i || '@bank.example', 'hr',
-       (array['North','South','East','West','Central'])[i]
+       (array['North','South','East','West','Central'])[i], 'HR Business Partner', 200
 from generate_series(1,5) i;
 
--- 20 reporting managers (cluster heads) and 20 mentors (senior RMs)
-insert into profiles(employee_code, full_name, email, role, region, branch, hr_id)
-select 'RM-MGR' || lpad(i::text,3,'0'), 'Manager ' || i, 'manager' || i || '@bank.example',
-       'reporting_manager', (array['North','South','East','West','Central'])[1 + (i-1) % 5],
-       'Cluster ' || i,
-       (select id from profiles where employee_code = 'HR' || lpad((1 + (i-1) % 5)::text,3,'0'))
-from generate_series(1,20) i;
+-- 20 Reporting Bosses: 4 per department, 10 to under 15 years' experience,
+-- spread so every region has 4 bosses
+insert into profiles(employee_code, full_name, email, role, department, region, designation,
+                     experience_months, previous_employer)
+select 'RB' || lpad(n::text,3,'0'),
+       (array['Vikram Malhotra','Shalini Nair','Arvind Kulkarni','Rekha Menon','Sanjay Batra',
+              'Deepa Raghavan','Manish Agarwal','Kavita Deshpande','Rajesh Iyer','Neelam Sethi',
+              'Harish Venkat','Pallavi Joshi','Amitabh Saxena','Sunita Reddy','Gautam Bose',
+              'Radhika Chopra','Suresh Pillai','Anjali Mathur','Naveen Rao','Farida Khan'])[n],
+       'boss' || n || '@bank.example', 'reporting_manager',
+       (array['LCB','MCB','ECB','TXB','TSF'])[d + 1],
+       (array['North','South','East','West','Central'])[((d + k) % 5) + 1],
+       (array['Cluster Head','Senior Vice President','Vice President','Cluster Head'])[k + 1] || ' · ' ||
+       (array['Large Corporate','Mid-Corporate','Emerging Corporates','Transaction Banking','Trade & SCF'])[d + 1],
+       120 + ((n * 7) % 60),                                   -- 10y0m to 14y11m
+       (array['HDFC Bank','ICICI Bank','Axis Bank','Kotak Mahindra Bank','Citi','Standard Chartered'])[1 + n % 6]
+from generate_series(0,4) d cross join generate_series(0,3) k
+cross join lateral (select d * 4 + k + 1 as n) x;
 
-insert into profiles(employee_code, full_name, email, role, region, branch, hr_id, manager_id)
-select 'MNT' || lpad(i::text,3,'0'), 'Mentor ' || i, 'mentor' || i || '@bank.example',
-       'mentor', (array['North','South','East','West','Central'])[1 + (i-1) % 5],
-       'Cluster ' || i,
-       (select id from profiles where employee_code = 'HR' || lpad((1 + (i-1) % 5)::text,3,'0')),
-       (select id from profiles where employee_code = 'RM-MGR' || lpad(i::text,3,'0'))
-from generate_series(1,20) i;
+-- 20 Mentors: senior people, 4 per department. Each mentors joinees of OTHER departments only.
+insert into profiles(employee_code, full_name, email, role, department, region, designation,
+                     experience_months)
+select 'MN' || lpad(n::text,3,'0'),
+       (array['Rohit Khanna','Meenakshi Sundaram','Ajay Thakur','Priyanka Sen','Kiran Hegde',
+              'Sameer Ali','Nandini Rao','Pradeep Gupta','Swati Jain','Venkatesh Murthy',
+              'Ritu Arora','Imran Shaikh','Lakshmi Narayan','Tarun Mehra','Divya Krishnan',
+              'Abhishek Roy','Geeta Pandey','Mohit Bansal','Shreya Kapoor','Ravi Shankar'])[n],
+       'mentor' || n || '@bank.example', 'mentor',
+       (array['LCB','MCB','ECB','TXB','TSF'])[d + 1],
+       (array['North','South','East','West','Central'])[((d + k + 2) % 5) + 1],
+       (array['Senior Relationship Manager','Senior Relationship Manager','Product Head','Senior Credit Partner'])[k + 1] || ' · ' ||
+       (array['Large Corporate','Mid-Corporate','Emerging Corporates','Transaction Banking','Trade & SCF'])[d + 1],
+       144 + ((n * 11) % 96)                                   -- 12 to 19 years
+from generate_series(0,4) d cross join generate_series(0,3) k
+cross join lateral (select d * 4 + k + 1 as n) x;
 
--- 1,000 trainees: 50 per mentor/manager pair, 200 per HR partner
-insert into profiles(employee_code, full_name, email, role, region, branch, cohort_id,
-                     mentor_id, manager_id, hr_id, joined_on)
-select 'TRN' || lpad(i::text,4,'0'),
-       (array['Aarav','Diya','Kabir','Ishita','Rohan','Sneha','Vikram','Ananya','Arjun','Priya',
-              'Nikhil','Tanvi','Rahul','Kavya','Siddharth','Pooja','Aditya','Neha','Varun','Riya'])[1 + i % 20]
-       || ' ' ||
-       (array['Sharma','Reddy','Iyer','Mehta','Nair','Gupta','Das','Kulkarni','Singh','Banerjee',
-              'Patel','Menon','Joshi','Rao','Chawla'])[1 + (i * 7) % 15],
-       'trainee' || i || '@bank.example', 'trainee',
-       (array['North','South','East','West','Central'])[1 + ((i-1) / 50) % 5],
-       'Cluster ' || (1 + (i-1) / 50),
-       '00000000-0000-0000-0000-000000000001',
-       (select id from profiles where employee_code = 'MNT'    || lpad((1 + (i-1)/50)::text,3,'0')),
-       (select id from profiles where employee_code = 'RM-MGR' || lpad((1 + (i-1)/50)::text,3,'0')),
-       (select id from profiles where employee_code = 'HR'     || lpad((1 + ((i-1)/50) % 5)::text,3,'0')),
-       '2026-10-05'
-from generate_series(1,1000) i;
+-- Demo intake: 24 joinees (976 seats left for HR to test with).
+-- All have more than 3 and less than 5 years' experience; assignment is automatic.
+select create_joinee_internal(jsonb_build_object(
+  'full_name', (array['Aarav','Diya','Kabir','Ishita','Rohan','Sneha','Vikram','Ananya','Arjun','Priya',
+                      'Nikhil','Tanvi','Rahul','Kavya','Siddharth','Pooja','Aditya','Neha','Varun','Riya'])[1 + i % 20]
+               || ' ' || (array['Sharma','Reddy','Iyer','Mehta','Nair','Gupta','Das','Kulkarni','Singh','Banerjee',
+                      'Patel','Menon','Joshi','Rao','Chawla'])[1 + (i * 7) % 15],
+  'email', 'trainee' || i || '@bank.example',
+  'department', (array['LCB','MCB','ECB','TXB','TSF'])[1 + i % 5],
+  'region', (array['North','South','East','West','Central'])[1 + (i * 3) % 5],
+  'experience_months', 37 + (i * 5) % 23,
+  'previous_employer', (array['Yes Bank','IndusInd Bank','Federal Bank','RBL Bank','IDFC First Bank','Bandhan Bank'])[1 + i % 6],
+  'previous_role', (array['Assistant RM','Credit Analyst','Relationship Officer','Trade Finance Officer','Cash Management Sales'])[1 + i % 5],
+  'start_date', '2026-10-05'))
+from generate_series(1,24) i;
 
--- Leadership viewer for the business case dashboard
+-- Optional leadership viewer (no screen in the app; for reports only)
 insert into profiles(employee_code, full_name, email, role)
 values ('LDR001','Head – Corporate Banking','cbhead@bank.example','leadership');

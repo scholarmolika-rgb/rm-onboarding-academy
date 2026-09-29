@@ -19,6 +19,21 @@ type P = Record<string, any>;
 const APP = Deno.env.get("APP_URL") ?? "https://rm-academy.example";
 
 export const templates: Record<string, (p: P) => { subject: string; html: string }> = {
+  welcome_joinee: (p) => ({
+    subject: "Welcome to the RM Onboarding Academy",
+    html: shell(`Welcome, ${p.trainee}`, `<p>Your 30-day programme starts on <b>${p.start_date ?? "your joining date"}</b>.
+      You will join <b>${p.department}</b> after Day 30.</p>
+      <p>Your people: Reporting Boss <b>${p.boss}</b>; Mentor <b>${p.mentor}</b> (from another department,
+      so you see the bank beyond your own team); HR partner <b>${p.hr}</b>.</p>
+      ${btn(`${APP}/journey`, "Open the Academy")}`),
+  }),
+  new_joinee_assigned: (p) => ({
+    subject: `New joinee assigned: ${p.trainee} (${p.employee_code})`,
+    html: shell("A new joinee has been assigned to you", `<p><b>${p.trainee}</b> (${p.employee_code}) joins
+      <b>${p.department}</b> after the 30-day programme. Reporting Boss: <b>${p.boss}</b>. Mentor: <b>${p.mentor}</b>.</p>
+      <p>Please introduce yourself before Day 1 and block time for Day 15 and Day 21 in case coaching is needed.</p>
+      ${btn(`${APP}/team`, "View your trainees")}`),
+  }),
   gate_failed_coaching_required: (p) => ({
     subject: `Action required: 1-day coaching for ${p.trainee} (${p.employee_code})`,
     html: shell("Coaching required", `

@@ -1,7 +1,6 @@
 \set ON_ERROR_STOP 1
 -- link auth users for trainee1, trainee2, mentor1, manager1, hr1
-insert into auth.users(email) select email from profiles where email in
- ('trainee1@bank.example','trainee2@bank.example','trainee3@bank.example','trainee4@bank.example','mentor1@bank.example','manager1@bank.example','hr1@bank.example');
+insert into auth.users(email) select email from profiles;
 create temp table u as select p.email, p.user_id from profiles p where user_id is not null;
 select email from u order by 1;
 
@@ -9,6 +8,10 @@ select email from u order by 1;
 update assessments set secure_delivery = false;
 -- helper: act as someone
 create or replace function pg_temp.act(e text) returns void language sql as $$ select set_config('test.uid',(select user_id::text from profiles where email=e),false) $$;
+create or replace function pg_temp.coach(trainee_email text, r text) returns void language sql as $$
+  select set_config('test.uid',(select c.user_id::text from profiles t join profiles c on c.id =
+    case r when 'mentor' then t.mentor_id when 'reporting_manager' then t.manager_id else t.hr_id end
+    where t.email = trainee_email), false) $$;
 create or replace function pg_temp.done(e text, ph int) returns void language sql as $$
  insert into progress(trainee_id,item_id,status,completed_at)
  select (select id from profiles where email=e), li.id,'completed',now() from learning_items li join modules m on m.id=li.module_id where m.phase_id=ph
@@ -27,11 +30,11 @@ select status from journeys where trainee_id = me();
 select coach_role, scheduled_on is not null sched from coaching_sessions order by coach_role;
 select template, to_emails from notification_outbox order by created_at;
 
-select pg_temp.act('mentor1@bank.example');
+select pg_temp.coach('trainee1@bank.example','mentor');
 select record_coaching((select session_id from v_my_coaching_queue), 'pass', 'Strong on product, needs some revision on AML thresholds; confident overall.');
-select pg_temp.act('manager1@bank.example');
+select pg_temp.coach('trainee1@bank.example','reporting_manager');
 select record_coaching((select session_id from v_my_coaching_queue), 'pass', 'Discussed credit process in depth; understands CAM flow reasonably well.');
-select pg_temp.act('hr1@bank.example');
+select pg_temp.coach('trainee1@bank.example','hr');
 select record_coaching((select session_id from v_my_coaching_queue), 'repeat', 'Governance gaps are material for a customer-facing role; repeat GOV module.', array[(select id from modules where code='GOV')]);
 select j.status, (select count(*) from remediation_assignments) rem from journeys j join profiles p on p.id=j.trainee_id where p.email='trainee1@bank.example';
 
@@ -48,12 +51,12 @@ select submit_attempt(:'g2', pg_temp.answer(:'g2', true)) ->> 'passed' as gate2;
 select pg_temp.done('trainee1@bank.example',3);
 select (start_attempt('FINAL')->>'attempt_id')::uuid as f1 \gset
 select submit_attempt(:'f1', pg_temp.answer(:'f1', true)) ->> 'passed' as final;
-select pg_temp.act('mentor1@bank.example');
+select pg_temp.coach('trainee1@bank.example','mentor');
 do $$ begin perform sign_off((select id from profiles where email='trainee1@bank.example'), true, 'Ready'); exception when others then raise notice 'EXPECTED BLOCK: %', sqlerrm; end $$;
 select record_viva((select id from profiles where email='trainee1@bank.example'),'FINAL',4,'Explained pricing, KYC escalation and DP calculation clearly under questioning.');
 select sign_off((select id from profiles where email='trainee1@bank.example'), true, 'Ready');
-select pg_temp.act('manager1@bank.example'); select sign_off((select id from profiles where email='trainee1@bank.example'), true, 'Ready');
-select pg_temp.act('hr1@bank.example');      select sign_off((select id from profiles where email='trainee1@bank.example'), true, 'Ready');
+select pg_temp.coach('trainee1@bank.example','reporting_manager'); select sign_off((select id from profiles where email='trainee1@bank.example'), true, 'Ready');
+select pg_temp.coach('trainee1@bank.example','hr');      select sign_off((select id from profiles where email='trainee1@bank.example'), true, 'Ready');
 select status, certified_at is not null from journeys j join profiles p on p.id=j.trainee_id where p.email='trainee1@bank.example';
 
 -- === Trainee 2: fail Gate 1 twice path → coaches pass on first; check coach-pass unlock
@@ -61,11 +64,11 @@ select pg_temp.act('trainee2@bank.example');
 select pg_temp.done('trainee2@bank.example',1);
 select (start_attempt('GATE_1')->>'attempt_id')::uuid as b1 \gset
 select submit_attempt(:'b1', pg_temp.answer(:'b1', false)) ->> 'passed';
-select pg_temp.act('mentor1@bank.example');
+select pg_temp.coach('trainee2@bank.example','mentor');
 select record_coaching((select session_id from v_my_coaching_queue), 'pass', 'Nervous in test; verbal understanding is solid across all four pillars.');
-select pg_temp.act('manager1@bank.example');
+select pg_temp.coach('trainee2@bank.example','reporting_manager');
 select record_coaching((select session_id from v_my_coaching_queue), 'pass', 'Walked through three live deals; answers were accurate and well reasoned.');
-select pg_temp.act('hr1@bank.example');
+select pg_temp.coach('trainee2@bank.example','hr');
 select record_coaching((select session_id from v_my_coaching_queue), 'pass', 'Good conduct awareness; no further remediation needed from HR perspective.');
 select current_phase, status from journeys j join profiles p on p.id=j.trainee_id where p.email='trainee2@bank.example';
 
@@ -149,7 +152,7 @@ select score_pct, passed, integrity_score, integrity_flags, review_state from at
 select status from journeys where trainee_id = me();
 
 -- B2: mentor holds a viva and voids the result → supervised re-sit only
-select pg_temp.act('mentor1@bank.example');
+select pg_temp.coach('trainee3@bank.example','mentor');
 select trainee, gate, integrity_score from v_my_integrity_reviews;
 select verify_attempt((select attempt_id from v_my_integrity_reviews limit 1), 'voided', 2,
   'Could not explain the drawing power or KYC answers given in the paper; re-sit supervised.');
@@ -175,3 +178,56 @@ do $$ begin
   assert (select count(*) from notification_outbox where template='integrity_review_required')=1, 'one integrity email';
   raise notice 'ALL INTEGRITY TESTS PASSED';
 end $$;
+
+-- =====================================================================
+-- Part C: people model — personas, assignment rules, seats
+-- =====================================================================
+select set_config('test.uid', (select user_id::text from profiles where email='hr1@bank.example'), false);
+do $$ declare r jsonb; n int; begin
+  -- personas
+  assert (select count(*) from profiles where role='reporting_manager') = 20, '20 reporting bosses';
+  assert not exists (select 1 from profiles where role='reporting_manager' and experience_months not between 120 and 179), 'boss experience 10-<15y';
+  assert not exists (select 1 from profiles where role='trainee' and experience_months not between 37 and 59), 'joinee experience >3-<5y';
+  assert not exists (select 1 from profiles t join profiles m on m.id=t.mentor_id where t.role='trainee' and m.department=t.department), 'mentor from another department';
+  assert not exists (select 1 from profiles t join profiles b on b.id=t.manager_id where t.role='trainee' and b.department<>t.department), 'boss from same department';
+  assert (select free from v_seat_usage) = 1000 - (select count(*) from profiles where role='trainee'), 'seats';
+
+  -- experience outside the persona is refused
+  begin perform hr_create_joinee('{"full_name":"Too Junior","email":"junior@bank.example","department":"MCB","region":"North","experience_months":30}');
+        raise exception 'should block'; exception when others then raise notice 'EXPECTED BLOCK: %', sqlerrm; end;
+  begin perform hr_create_joinee('{"full_name":"Too Senior","email":"senior@bank.example","department":"MCB","region":"North","experience_months":60}');
+        raise exception 'should block'; exception when others then raise notice 'EXPECTED BLOCK: %', sqlerrm; end;
+  -- mentor from the same department is refused
+  begin perform hr_create_joinee(jsonb_build_object('full_name','Same Dept','email','same@bank.example','department','MCB','region','North',
+          'experience_months',48,'mentor_id',(select id from profiles where role='mentor' and department='MCB' limit 1)));
+        raise exception 'should block'; exception when others then raise notice 'EXPECTED BLOCK: %', sqlerrm; end;
+  -- boss from another department is refused
+  begin perform hr_create_joinee(jsonb_build_object('full_name','Wrong Boss','email','wrongboss@bank.example','department','MCB','region','North',
+          'experience_months',48,'manager_id',(select id from profiles where role='reporting_manager' and department='LCB' limit 1)));
+        raise exception 'should block'; exception when others then raise notice 'EXPECTED BLOCK: %', sqlerrm; end;
+
+  -- happy path: auto-assignment
+  r := hr_create_joinee('{"full_name":"Test Joinee","email":"test.joinee@bank.example","department":"TSF","region":"West","experience_months":50,"previous_employer":"Yes Bank","previous_role":"Trade Finance Officer"}');
+  raise notice 'created: %', r;
+  assert r->>'mentor_department' <> 'TSF' and r->>'boss_department' = 'TSF', 'auto-assignment rules';
+  assert (select count(*) from notification_outbox where template in ('welcome_joinee','new_joinee_assigned')
+          and payload->>'trainee'='Test Joinee') = 2, 'welcome + assignment emails';
+
+  -- bulk: one bad row does not stop the others
+  r := hr_create_joinees('[{"full_name":"Bulk One","email":"bulk1@bank.example","department":"LCB","region":"South","experience_months":40},
+                           {"full_name":"Bulk Bad","email":"bulk2@bank.example","department":"LCB","region":"South","experience_months":24},
+                           {"full_name":"Bulk Three","email":"bulk3@bank.example","department":"ECB","region":"East","experience_months":55}]');
+  raise notice 'bulk: %', r;
+  assert (select count(*) from jsonb_array_elements(r) e where (e->>'ok')::boolean) = 2, 'bulk 2 ok';
+
+  -- capacity
+  update cohorts set capacity = (select count(*) from profiles where role='trainee');
+  begin perform hr_create_joinee('{"full_name":"Over Capacity","email":"over@bank.example","department":"ECB","region":"East","experience_months":45}');
+        raise exception 'should block'; exception when others then raise notice 'EXPECTED BLOCK: %', sqlerrm; end;
+  update cohorts set capacity = 1000;
+end $$;
+select pg_temp.act('trainee5@bank.example');
+do $$ begin perform hr_create_joinee('{"full_name":"X","email":"x@bank.example","department":"ECB","region":"East","experience_months":45}');
+  raise exception 'should block'; exception when others then raise notice 'EXPECTED BLOCK: %', sqlerrm; end $$;
+select role, department, count(*) filter (where role<>'hr') n, min(trainees), max(trainees) from v_coach_load group by 1,2 order by 1,2;
+do $$ begin raise notice 'ALL PEOPLE-MODEL TESTS PASSED'; end $$;

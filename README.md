@@ -2,7 +2,7 @@
 
 A 30-day, gated onboarding platform for corporate Relationship Managers in a large private bank, with an AI assistant, automatic escalations and a leadership business case. Built on **Supabase** (Postgres, Auth, Edge Functions, Storage, pgvector), developed in **VS Code**, versioned on **GitHub**.
 
-Sized for one intake of **1,000 new RMs, 20 mentors, 20 reporting managers and 5 HR partners**.
+Sized for a cohort of **1,000 new RMs** (each with more than 3 and less than 5 years' experience), **20 Reporting Bosses** (10 to under 15 years, in the joinee's own department), **20 Mentors** (always from a different department) and **5 HR partners** (one per region). The cohort starts with 24 demo joinees; HR adds the rest. See `docs/PEOPLE_MODEL.md`.
 
 ## The programme
 
@@ -30,6 +30,7 @@ supabase/
     ..._rls_views_cron.sql  row-level security per role, dashboard views, cron schedule
     ..._chatbot_sla.sql     vector search for the assistant, SLA breach detection
     ..._assessment_integrity.sql  one-question-at-a-time delivery, server timers, integrity score, verification viva
+    ..._people_model.sql    departments, personas, mentor-from-another-department rule, 1,000 seats, hr_create_joinee(s)
   seed.sql                  phases, 7 modules, 38 learning items, 3 assessments, 1,000/20/20/5 org
   seed_questions.sql        generated: 58 bank questions + 40 personalised calculation variants
   functions/
@@ -52,7 +53,7 @@ scripts/                    question seed builder, knowledge-base ingestion
 | **New Joinee** | My day · Training programme · Assessments · Shadow log · Ask the Academy | Reads the day's notes, uses working files and calculators, takes the three gated tests, logs shadow interactions, asks the chatbot |
 | **Mentor** | My trainees · Coaching & checks · Shadow reviews · Day-30 sign-off | Coaching day at Gate 1 and 2, verifies held results, rates shadow logs, runs the Day-30 viva and signs |
 | **Reporting Boss** | My team · Coaching · Day-30 sign-off | Coaching day at Gate 1 and 2, signs Day 30 |
-| **HR** | Programme health · Coaching & reviews · Test integrity · People & capacity · Email log · Day-30 sign-off | Coaching day at Gate 1 and Day 30, decides after two failed attempts, watches attrition risk and capacity, signs Day 30 |
+| **HR** | Programme health · New joinees · Coaching & reviews · Test integrity · People & capacity · Email log · Day-30 sign-off | Adds joinees one by one or by CSV (auto-assigned boss, mentor and HR partner), coaching day at Gate 1 and Day 30, decides after two failed attempts, watches attrition risk and capacity, signs Day 30 |
 
 The chatbot is available in all four interfaces and answers from `/content`. In production each person signs in with SSO and sees only their own interface (`profiles.role`: `trainee`, `mentor`, `reporting_manager` = Reporting Boss, `hr`). There is no business-case screen; the numbers in `docs/BUSINESS_CASE.md` are for planning only.
 
@@ -75,7 +76,7 @@ Then:
 ```bash
 python3 scripts/build_question_seed.py   # regenerates seed_questions.sql after you edit the question bank
 supabase start                           # local Postgres, Auth, Studio at http://localhost:54323
-supabase db reset                        # runs migrations + seeds (1,046 people, 98 questions)
+supabase db reset                        # runs migrations + seeds (5 HR, 20 bosses, 20 mentors, 24 demo joinees, 98 questions)
 cp .env.example supabase/functions/.env  # fill keys
 supabase functions serve --env-file supabase/functions/.env
 node scripts/ingest-kb.mjs               # loads /content into the assistant's knowledge base
@@ -98,4 +99,6 @@ See **docs/BUILD_PATHWAY.md** for the full 10-week plan.
 
 The gating engine was run end to end on Postgres 16: fail Gate 1 → three coaching sessions + emails queued → HR requests repeat → remediation → retake passes → Gate 2 → Final → three sign-offs → certified; coach-pass path; Gate 2 escalates to two coaches only; blocked when mandatory learning is open; mentor cannot sign off without a Day-30 viva.
 
-Integrity suite: serving before the honour declaration, a second session, going back and late answers are all refused; leaving the screen + paste holds a 90% pass for review; mentor voids it; re-sit is refused until a supervised window opens, then passes without using an attempt; a clean candidate passes straight through. Run it with the CI workflow or `psql -f supabase/tests/gating_test.sql`.
+Integrity suite: serving before the honour declaration, a second session, going back and late answers are all refused; leaving the screen + paste holds a 90% pass for review; mentor voids it; re-sit is refused until a supervised window opens, then passes without using an attempt; a clean candidate passes straight through.
+
+People-model suite: 20 bosses all 10–15 years; every joinee 3–5 years; no mentor from the joinee's department; no boss from another department; 30- and 60-month joinees refused; wrong-department mentor or boss refused; auto-assignment and emails; bulk import with one bad row; full cohort refused; non-HR users cannot add joinees. Run it with the CI workflow or `psql -f supabase/tests/gating_test.sql`.

@@ -31,6 +31,9 @@ Each item below closes a gap a real bank would hit in the first pilot.
 ## Assessment integrity (AI and answer sharing)
 Full design in `ASSESSMENT_INTEGRITY.md`. In short: personalised calculation numbers per trainee; one question at a time on a server clock with no going back; assistant paused and question bank never indexed; behaviour signals build an integrity score; a held pass is verified by the mentor in a 20-minute viva; voided results mean a supervised re-sit and a conduct review; Day-30 sign-off requires a viva. Signals never fail anyone automatically.
 
+## People model
+Full rules in `PEOPLE_MODEL.md`. Personas are enforced in the database: joinees 3–5 years' experience, Reporting Bosses 10–15 years in the joinee's own department, Mentors always from a different department (independent assessment, wider view of the bank). HR adds joinees one by one or by CSV into a 1,000-seat cohort with automatic, load-balanced, same-region-first assignment; offers declined before Day 1 can be withdrawn to free the seat. Each department is capped at 200 joinees by boss capacity, which HR sees before the cohort fills.
+
 ## Engagement
 - Supportive email to the trainee when coaching starts (no scores in subject lines).
 - Inactivity nudges after 48 hours; attrition-risk score for HR.

@@ -26,6 +26,9 @@ Supabase
 
 ## Track A — the app
 
+People rules (see `PEOPLE_MODEL.md`): joinees 3–5 years' experience; 20 Reporting Bosses with 10–15 years in the joinee's own department; mentors always from another department; 1,000 seats per cohort.
+
+
 | Week | Build | Done when |
 |---|---|---|
 | 1 | Repo on GitHub, Supabase project, run migrations + seed. Deploy `web/index.html` as the clickable demo. | Leadership demo link works |
@@ -33,7 +36,7 @@ Supabase
 | 3 | Trainee screens: journey strip, today's items (files from Storage), mark complete. **Secure assessment runner**: honour declaration, `serve_question` / `answer_question` one at a time, server timer, event capture (`log_attempt_event`), full screen. | Gate 1 can be taken end to end; refresh, back and second tab are all refused |
 | 4 | Coach screens: `v_my_coaching_queue`, `record_coaching`, remediation, **verification viva** (`v_my_integrity_reviews`, `verify_attempt`). HR screens: escalations, integrity dashboard, outbox log, risk list. | Fail → 3 emails → 3 decisions → unlock/repeat works live; held pass → viva → confirm/void |
 | 5 | Shadow log (Days 22–29) with masked client reference + mentor rating; Day-30 sign-off with `sign_off`. | A trainee reaches Certified |
-| 6 | HR interface: programme health from `v_programme_kpis`, people & capacity, email log; CSV export for HRMS. Business-case numbers stay in `docs/`, not in the app. | HR runs a full cohort day from the app |
+| 6 | HR interface: **New joinees** (form with live assignment preview, CSV import via `hr_create_joinees`, roster, withdraw before Day 1), programme health, people & capacity, email log. Connect the HRMS/ATS feed so accepted offers arrive automatically. Business-case numbers stay in `docs/`, not in the app. | HR adds 50 test joinees and every one gets a same-department boss and an other-department mentor |
 
 ## Track B — the agent (Academy Assistant)
 
