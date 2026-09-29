@@ -141,3 +141,10 @@ from generate_series(1,24) i;
 -- Optional leadership viewer (no screen in the app; for reports only)
 insert into profiles(employee_code, full_name, email, role)
 values ('LDR001','Head – Corporate Banking','cbhead@bank.example','leadership');
+
+-- Demo logins: everyone seeded above counts as "added by HR" and has a login issued.
+-- Login ID = employee code. scripts/create_demo_logins.mjs creates the matching
+-- Supabase Auth users with the demo password for local testing.
+update profiles set login_id = employee_code, account_status = 'active',
+       must_change_password = false, login_created_at = now()
+where role in ('hr','trainee','mentor','reporting_manager');

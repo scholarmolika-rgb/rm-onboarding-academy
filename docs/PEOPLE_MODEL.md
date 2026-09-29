@@ -31,6 +31,9 @@ HR can override the boss (same department only) or the mentor (other departments
 - Mentors outside a department: 16 × 50 = 800 places, so mentor capacity is never the constraint at a balanced intake.
 - Four monthly waves of 250 keep shadowing to about 12 joinees per mentor at a time.
 
+## Adding Reporting Bosses and Mentors
+HR adds them in People & capacity (`hr_add_staff`): bosses need 10 to under 15 years and the programme allows 20 active; mentors need 12+ years. A boss or mentor can be deactivated only when no joinees are assigned to them. Everyone HR adds gets a login only when HR issues it (see `ACCESS_AND_LOGINS.md`).
+
 ## HR screens
 - **New joinees:** add one joinee with a live assignment preview; paste or upload a CSV (`full_name, email, department, region, experience_months, previous_employer, previous_role, start_date`); roster with search and department filter; withdraw before Day 1 when an offer is declined (frees the seat).
 - **People & capacity:** every boss, mentor and HR partner with experience, region and load.

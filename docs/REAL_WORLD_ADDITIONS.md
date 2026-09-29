@@ -38,3 +38,6 @@ Full rules in `PEOPLE_MODEL.md`. Personas are enforced in the database: joinees 
 - Supportive email to the trainee when coaching starts (no scores in subject lines).
 - Inactivity nudges after 48 hours; attrition-risk score for HR.
 - The assistant answers questions 24×7, so trainees are not blocked waiting for a busy mentor.
+
+## Access control
+Full rules in `ACCESS_AND_LOGINS.md`. No self-registration: only HR adds people and issues logins (login ID = employee code, temporary password shown once, forced change at first sign-in). The database refuses auth accounts for anyone without an HR-issued login. HR can reset, disable and enable logins; deactivating a boss or mentor requires reassigning their joinees first. Sessions time out after 15 minutes idle; all access changes are audited.

@@ -19,6 +19,13 @@ type P = Record<string, any>;
 const APP = Deno.env.get("APP_URL") ?? "https://rm-academy.example";
 
 export const templates: Record<string, (p: P) => { subject: string; html: string }> = {
+  login_issued: (p) => ({
+    subject: "Your Academy login ID",
+    html: shell(`Hello ${p.name},`, `<p>Your login ID for the Corporate Banking Academy is <b>${p.login_id}</b>.</p>
+      <p>Your HR partner will give you a temporary password in person or through secure messaging.
+      You will choose your own password the first time you sign in. We never send passwords by email.</p>
+      ${btn(`${APP}`, "Go to the Academy")}`),
+  }),
   welcome_joinee: (p) => ({
     subject: "Welcome to the RM Onboarding Academy",
     html: shell(`Welcome, ${p.trainee}`, `<p>Your 30-day programme starts on <b>${p.start_date ?? "your joining date"}</b>.

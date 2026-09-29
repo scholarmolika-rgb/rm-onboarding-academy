@@ -9,8 +9,31 @@ const SUPABASE_ANON_KEY = "<anon-key>";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export const api = {
-  // Auth: magic link for the pilot; switch to SAML SSO (Azure AD / Okta) for production
-  signIn: (email) => sb.auth.signInWithOtp({ email }),
+  // Auth: only HR-issued logins. Sign-up is OFF in Supabase; the auth trigger refuses anyone else.
+  // Login ID (employee code, e.g. TRN0025) → email → password sign-in.
+  signIn: async (loginId, password) => {
+    const { data: email } = await sb.rpc("resolve_login", { p_login: loginId });
+    // same message for unknown, disabled or wrong password, so IDs cannot be probed
+    if (!email) return { error: { message: "Login ID or password is incorrect" } };
+    const res = await sb.auth.signInWithPassword({ email, password });
+    if (res.error) return { error: { message: "Login ID or password is incorrect" } };
+    const { data: me } = await sb.rpc("record_sign_in");   // {role, login_id, must_change_password, account_status}
+    return { data: me };
+  },
+  // first sign-in: replace the temporary password
+  changePassword: async (newPassword) => {
+    const { error } = await sb.auth.updateUser({ password: newPassword });
+    if (!error) await sb.rpc("password_changed");
+    return { error };
+  },
+  signOut: () => sb.auth.signOut(),
+
+  // HR: logins (Edge Function uses the service role; returns temporary passwords once)
+  logins: () => sb.from("v_logins").select("*").order("role"),
+  provision: (action, profileIds) =>          // action: create | reset | disable | enable
+    sb.functions.invoke("hr-provision-user", { body: { action, profile_ids: profileIds } }),
+  addStaff: (row) => sb.rpc("hr_add_staff", { p: row }),   // {role:'reporting_manager'|'mentor', full_name, email, department, region, experience_months, designation}
+  setStaffActive: (profileId, active) => sb.rpc("hr_set_staff_active", { p_profile: profileId, p_active: active }),
   signOut: () => sb.auth.signOut(),
 
   // Trainee

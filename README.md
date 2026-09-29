@@ -31,12 +31,14 @@ supabase/
     ..._chatbot_sla.sql     vector search for the assistant, SLA breach detection
     ..._assessment_integrity.sql  one-question-at-a-time delivery, server timers, integrity score, verification viva
     ..._people_model.sql    departments, personas, mentor-from-another-department rule, 1,000 seats, hr_create_joinee(s)
+    ..._logins.sql          HR-issued logins only, no self sign-up, forced password change, hr_add_staff
   seed.sql                  phases, 7 modules, 38 learning items, 3 assessments, 1,000/20/20/5 org
   seed_questions.sql        generated: 58 bank questions + 40 personalised calculation variants
   functions/
     notify-dispatch/        sends queued emails (Resend; swap for MS Graph/SMTP)
     chatbot/                RAG assistant (Claude or any OpenAI-compatible model, incl. on-prem Llama)
     daily-scheduler/        nightly risk scores, SLA breaches, inactivity nudges
+    hr-provision-user/      HR-only: create, reset, disable, enable logins (service role)
 content/                    readable notes per day + working files (KYC checklist, pricing & P&L workbook)
 web/src/app.template.html   the app (four interfaces + chatbot); build with scripts/build_prototype.py
 web/index.html              built app with the /content curriculum embedded – demo data
@@ -46,6 +48,10 @@ docs/                       build pathway, business case, real-world additions
 scripts/                    question seed builder, knowledge-base ingestion
 ```
 
+## Front page and sign-in
+
+The app opens on the Academy front page with a sign-in box. **Only people HR has added can sign in**: HR adds New Joinees, Reporting Bosses and Mentors, then creates each login (login ID = employee code, temporary password shown once, changed at first sign-in). There is no self-registration. See `docs/ACCESS_AND_LOGINS.md`.
+
 ## The app: four interfaces
 
 | Interface | Menu | What they do |
@@ -53,7 +59,7 @@ scripts/                    question seed builder, knowledge-base ingestion
 | **New Joinee** | My day · Training programme · Assessments · Shadow log · Ask the Academy | Reads the day's notes, uses working files and calculators, takes the three gated tests, logs shadow interactions, asks the chatbot |
 | **Mentor** | My trainees · Coaching & checks · Shadow reviews · Day-30 sign-off | Coaching day at Gate 1 and 2, verifies held results, rates shadow logs, runs the Day-30 viva and signs |
 | **Reporting Boss** | My team · Coaching · Day-30 sign-off | Coaching day at Gate 1 and 2, signs Day 30 |
-| **HR** | Programme health · New joinees · Coaching & reviews · Test integrity · People & capacity · Email log · Day-30 sign-off | Adds joinees one by one or by CSV (auto-assigned boss, mentor and HR partner), coaching day at Gate 1 and Day 30, decides after two failed attempts, watches attrition risk and capacity, signs Day 30 |
+| **HR** | Programme health · New joinees · Logins & access · Coaching & reviews · Test integrity · People & capacity · Email log · Day-30 sign-off | Adds joinees (one by one or CSV, auto-assigned boss, mentor and HR partner) and Reporting Bosses and Mentors; creates, resets and disables logins; coaching day at Gate 1 and Day 30, decides after two failed attempts, watches attrition risk and capacity, signs Day 30 |
 
 The chatbot is available in all four interfaces and answers from `/content`. In production each person signs in with SSO and sees only their own interface (`profiles.role`: `trainee`, `mentor`, `reporting_manager` = Reporting Boss, `hr`). There is no business-case screen; the numbers in `docs/BUSINESS_CASE.md` are for planning only.
 
@@ -80,6 +86,7 @@ supabase db reset                        # runs migrations + seeds (5 HR, 20 bos
 cp .env.example supabase/functions/.env  # fill keys
 supabase functions serve --env-file supabase/functions/.env
 node scripts/ingest-kb.mjs               # loads /content into the assistant's knowledge base
+node scripts/create_demo_logins.mjs      # LOCAL ONLY: demo passwords for the seeded people
 ```
 Open `web/index.html` with the VS Code *Live Server* extension to see the prototype.
 
@@ -101,4 +108,6 @@ The gating engine was run end to end on Postgres 16: fail Gate 1 → three coach
 
 Integrity suite: serving before the honour declaration, a second session, going back and late answers are all refused; leaving the screen + paste holds a 90% pass for review; mentor voids it; re-sit is refused until a supervised window opens, then passes without using an attempt; a clean candidate passes straight through.
 
-People-model suite: 20 bosses all 10–15 years; every joinee 3–5 years; no mentor from the joinee's department; no boss from another department; 30- and 60-month joinees refused; wrong-department mentor or boss refused; auto-assignment and emails; bulk import with one bad row; full cohort refused; non-HR users cannot add joinees. Run it with the CI workflow or `psql -f supabase/tests/gating_test.sql`.
+People-model suite: 20 bosses all 10–15 years; every joinee 3–5 years; no mentor from the joinee's department; no boss from another department; 30- and 60-month joinees refused; wrong-department mentor or boss refused; auto-assignment and emails; bulk import with one bad row; full cohort refused; non-HR users cannot add joinees.
+
+Login suite: sign-up refused for strangers and for HR-added people without an issued login; only HR can issue logins; login ID resolves in any case; disabled logins cannot sign in; failed account creation is reverted; first-sign-in password change; HR adds bosses (10–15 years, max 20) and mentors (12+ years); a boss with joinees cannot be deactivated. Run it with the CI workflow or `psql -f supabase/tests/gating_test.sql`.

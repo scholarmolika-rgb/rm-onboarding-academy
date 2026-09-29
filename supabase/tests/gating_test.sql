@@ -1,6 +1,6 @@
 \set ON_ERROR_STOP 1
 -- link auth users for trainee1, trainee2, mentor1, manager1, hr1
-insert into auth.users(email) select email from profiles;
+insert into auth.users(email) select email from profiles where account_status = 'active';
 create temp table u as select p.email, p.user_id from profiles p where user_id is not null;
 select email from u order by 1;
 
@@ -231,3 +231,67 @@ do $$ begin perform hr_create_joinee('{"full_name":"X","email":"x@bank.example",
   raise exception 'should block'; exception when others then raise notice 'EXPECTED BLOCK: %', sqlerrm; end $$;
 select role, department, count(*) filter (where role<>'hr') n, min(trainees), max(trainees) from v_coach_load group by 1,2 order by 1,2;
 do $$ begin raise notice 'ALL PEOPLE-MODEL TESTS PASSED'; end $$;
+
+-- =====================================================================
+-- Part D: HR-provisioned logins and staff
+-- =====================================================================
+do $$ declare hr uuid := (select id from profiles where email='hr1@bank.example');
+              j uuid := (select id from profiles where email='test.joinee@bank.example');
+              b uuid := (select id from profiles where role='reporting_manager' limit 1); r jsonb; begin
+  -- self sign-up for someone HR never added is refused
+  begin insert into auth.users(email) values ('stranger@gmail.com'); raise exception 'should block';
+  exception when others then raise notice 'EXPECTED BLOCK: %', sqlerrm; end;
+  -- HR added this joinee but has not issued a login yet: still refused
+  begin insert into auth.users(email) values ('test.joinee@bank.example'); raise exception 'should block';
+  exception when others then raise notice 'EXPECTED BLOCK: %', sqlerrm; end;
+  -- a non-HR actor cannot create logins
+  begin perform apply_login_change(j, 'create', b); raise exception 'should block';
+  exception when others then raise notice 'EXPECTED BLOCK: %', sqlerrm; end;
+  -- HR issues the login, then the Edge Function creates the auth user (trigger links it)
+  perform apply_login_change(j, 'create', hr);
+  insert into auth.users(email) values ('test.joinee@bank.example');
+  assert (select user_id is not null from profiles where id=j), 'auth user linked';
+  assert (select login_id from profiles where id=j) like 'TRN%', 'login id = employee code';
+  assert (select must_change_password from profiles where id=j), 'must change at first sign-in';
+  assert resolve_login(lower((select login_id from profiles where id=j))) = 'test.joinee@bank.example', 'resolve by login id, any case';
+  perform apply_login_change(j, 'disable', hr);
+  assert resolve_login((select login_id from profiles where id=j)) is null, 'disabled cannot sign in';
+  assert resolve_login('NOBODY999') is null, 'unknown id';
+  perform apply_login_change(j, 'enable', hr);
+  -- revert after a failed auth-user creation
+  perform apply_login_change((select id from profiles where email='bulk1@bank.example'), 'create', hr);
+  perform apply_login_change((select id from profiles where email='bulk1@bank.example'), 'revert', hr);
+  assert (select account_status from profiles where email='bulk1@bank.example') = 'none', 'revert';
+  assert exists (select 1 from audit_log where action = 'login_create'), 'audited';
+end $$;
+
+-- the person replaces the temporary password
+select pg_temp.act('test.joinee@bank.example');
+select password_changed();
+do $$ begin assert not (select must_change_password from profiles where email='test.joinee@bank.example'), 'password changed';
+  -- joinees cannot add staff
+  begin perform hr_add_staff('{"role":"mentor","full_name":"X","email":"x2@bank.example","department":"LCB","region":"East","experience_months":160}');
+        raise exception 'should block'; exception when others then raise notice 'EXPECTED BLOCK: %', sqlerrm; end;
+end $$;
+
+-- HR adds Reporting Bosses and Mentors with persona checks
+select set_config('test.uid', (select user_id::text from profiles where email='hr1@bank.example'), false);
+do $$ declare r jsonb; begin
+  begin perform hr_add_staff('{"role":"reporting_manager","full_name":"Boss 21","email":"boss21@bank.example","department":"MCB","region":"North","experience_months":150}');
+        raise exception 'should block'; exception when others then raise notice 'EXPECTED BLOCK: %', sqlerrm; end;
+  begin perform hr_set_staff_active((select id from profiles where email='boss1@bank.example'), false);
+        raise exception 'should block'; exception when others then raise notice 'EXPECTED BLOCK: %', sqlerrm; end;
+  update profiles set is_active = false where email = 'boss20@bank.example';
+  begin perform hr_add_staff('{"role":"reporting_manager","full_name":"Too Junior Boss","email":"jb@bank.example","department":"MCB","region":"North","experience_months":100}');
+        raise exception 'should block'; exception when others then raise notice 'EXPECTED BLOCK: %', sqlerrm; end;
+  r := hr_add_staff('{"role":"reporting_manager","full_name":"New Boss","email":"newboss@bank.example","department":"TSF","region":"Central","experience_months":130,"designation":"Cluster Head"}');
+  assert r->>'employee_code' = 'RB021', 'boss code';
+  begin perform hr_add_staff('{"role":"mentor","full_name":"Junior Mentor","email":"jm@bank.example","department":"LCB","region":"East","experience_months":100}');
+        raise exception 'should block'; exception when others then raise notice 'EXPECTED BLOCK: %', sqlerrm; end;
+  r := hr_add_staff('{"role":"mentor","full_name":"New Mentor","email":"newmentor@bank.example","department":"LCB","region":"East","experience_months":160}');
+  assert r->>'employee_code' = 'MN021', 'mentor code';
+  perform apply_login_change((r->>'id')::uuid, 'create', me());
+  insert into auth.users(email) values ('newmentor@bank.example');
+  assert resolve_login('MN021') = 'newmentor@bank.example', 'new mentor can sign in';
+  raise notice 'ALL LOGIN TESTS PASSED';
+end $$;
