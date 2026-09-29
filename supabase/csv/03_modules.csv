@@ -1,0 +1,8 @@
+id,phase_id,code,title,pillar,day_from,day_to,sort
+1,1,GOV,"Governance, Regulation & Conduct",governance,1,3,1
+2,1,PPL,"People, Culture & the RM Role",people,4,5,2
+3,1,PRD,Corporate Banking Products,product,6,10,3
+4,1,PRC,Credit & Operating Processes,process,11,14,4
+5,2,PRI,Product Pricing & Calculations,pricing,16,18,5
+6,2,PNL,Relationship P&L and Portfolio Economics,pnl,19,20,6
+7,3,SHD,Shadow Customer Handling,shadowing,22,29,7

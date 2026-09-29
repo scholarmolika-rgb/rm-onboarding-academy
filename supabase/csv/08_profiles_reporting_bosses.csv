@@ -1,0 +1,21 @@
+id,employee_code,full_name,email,phone,role,region,department,designation,experience_months,previous_employer,previous_role,start_date,joined_on,cohort_id,mentor_id,manager_id,hr_id,max_trainees,is_active
+77736ac1-5f42-43a7-8e89-22c28b670a2a,RB001,Vikram Malhotra,boss1@bank.example,,reporting_manager,North,LCB,Cluster Head · Large Corporate,127,ICICI Bank,,,,,,,,50,true
+0305731c-cd82-4e5e-a3ff-72da7d1355ad,RB002,Shalini Nair,boss2@bank.example,,reporting_manager,South,LCB,Senior Vice President · Large Corporate,134,Axis Bank,,,,,,,,50,true
+202afe56-8318-4ed1-8cd9-f0c799e7fe19,RB003,Arvind Kulkarni,boss3@bank.example,,reporting_manager,East,LCB,Vice President · Large Corporate,141,Kotak Mahindra Bank,,,,,,,,50,true
+35ca29e5-5b29-484c-a814-ecdb56d5da40,RB004,Rekha Menon,boss4@bank.example,,reporting_manager,West,LCB,Cluster Head · Large Corporate,148,Citi,,,,,,,,50,true
+804e1874-e409-47b4-8c7c-fb0840d7cf60,RB005,Sanjay Batra,boss5@bank.example,,reporting_manager,South,MCB,Cluster Head · Mid-Corporate,155,Standard Chartered,,,,,,,,50,true
+2165f517-df61-4c3c-b825-bb3f50a3364f,RB006,Deepa Raghavan,boss6@bank.example,,reporting_manager,East,MCB,Senior Vice President · Mid-Corporate,162,HDFC Bank,,,,,,,,50,true
+230c1f31-9330-4380-a91a-c60af966f0aa,RB007,Manish Agarwal,boss7@bank.example,,reporting_manager,West,MCB,Vice President · Mid-Corporate,169,ICICI Bank,,,,,,,,50,true
+f464114b-7183-44c3-b4eb-d8fbc8874d62,RB008,Kavita Deshpande,boss8@bank.example,,reporting_manager,Central,MCB,Cluster Head · Mid-Corporate,176,Axis Bank,,,,,,,,50,true
+eb14ae49-720f-4af5-a4a0-af4256ea1e83,RB009,Rajesh Iyer,boss9@bank.example,,reporting_manager,East,ECB,Cluster Head · Emerging Corporates,123,Kotak Mahindra Bank,,,,,,,,50,true
+13d9b7cf-8e26-4fe1-b5c7-ddd0891ada4b,RB010,Neelam Sethi,boss10@bank.example,,reporting_manager,West,ECB,Senior Vice President · Emerging Corporates,130,Citi,,,,,,,,50,true
+cbe2abba-2d5f-4dbd-a207-27a0fdf51996,RB011,Harish Venkat,boss11@bank.example,,reporting_manager,Central,ECB,Vice President · Emerging Corporates,137,Standard Chartered,,,,,,,,50,true
+023fdd60-5bdc-472d-aff2-6a58143c4838,RB012,Pallavi Joshi,boss12@bank.example,,reporting_manager,North,ECB,Cluster Head · Emerging Corporates,144,HDFC Bank,,,,,,,,50,true
+0d8c30c1-320c-4995-9bf3-f67af8f3527e,RB013,Amitabh Saxena,boss13@bank.example,,reporting_manager,West,TXB,Cluster Head · Transaction Banking,151,ICICI Bank,,,,,,,,50,true
+ca92a4c5-14cb-452f-a4c0-98ee783ed173,RB014,Sunita Reddy,boss14@bank.example,,reporting_manager,Central,TXB,Senior Vice President · Transaction Banking,158,Axis Bank,,,,,,,,50,true
+46eda0a4-05f1-4eb4-9099-eeb83bdf0add,RB015,Gautam Bose,boss15@bank.example,,reporting_manager,North,TXB,Vice President · Transaction Banking,165,Kotak Mahindra Bank,,,,,,,,50,true
+20572af9-a2d7-4539-89ed-c99eebed3e62,RB016,Radhika Chopra,boss16@bank.example,,reporting_manager,South,TXB,Cluster Head · Transaction Banking,172,Citi,,,,,,,,50,true
+98d2b706-c9ba-4dcd-a876-d0f5fa439af6,RB017,Suresh Pillai,boss17@bank.example,,reporting_manager,Central,TSF,Cluster Head · Trade & SCF,179,Standard Chartered,,,,,,,,50,true
+ecccfb5d-4328-46fb-864a-6260121f7d2f,RB018,Anjali Mathur,boss18@bank.example,,reporting_manager,North,TSF,Senior Vice President · Trade & SCF,126,HDFC Bank,,,,,,,,50,true
+e0ce2e8d-8c8b-4c4d-9b17-8467909d5461,RB019,Naveen Rao,boss19@bank.example,,reporting_manager,South,TSF,Vice President · Trade & SCF,133,ICICI Bank,,,,,,,,50,true
+de1d8ad8-efa2-4a05-b9a3-557274686713,RB020,Farida Khan,boss20@bank.example,,reporting_manager,East,TSF,Cluster Head · Trade & SCF,140,Axis Bank,,,,,,,,50,true

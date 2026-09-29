@@ -1,0 +1,21 @@
+id,employee_code,full_name,email,phone,role,region,department,designation,experience_months,previous_employer,previous_role,start_date,joined_on,cohort_id,mentor_id,manager_id,hr_id,max_trainees,is_active
+a4158975-504f-42d8-9156-68599d54fdc5,MN001,Rohit Khanna,mentor1@bank.example,,mentor,East,LCB,Senior Relationship Manager · Large Corporate,155,,,,,,,,,50,true
+74a46ccd-02eb-412f-9d6c-a367b9ae0159,MN002,Meenakshi Sundaram,mentor2@bank.example,,mentor,West,LCB,Senior Relationship Manager · Large Corporate,166,,,,,,,,,50,true
+c5839405-8881-473f-9ed0-6b23676093eb,MN003,Ajay Thakur,mentor3@bank.example,,mentor,Central,LCB,Product Head · Large Corporate,177,,,,,,,,,50,true
+ef7fa7ed-069e-4756-bdd0-b101e6027943,MN004,Priyanka Sen,mentor4@bank.example,,mentor,North,LCB,Senior Credit Partner · Large Corporate,188,,,,,,,,,50,true
+a69acb8d-bbaf-428d-9c7e-e7edf644cb5e,MN005,Kiran Hegde,mentor5@bank.example,,mentor,West,MCB,Senior Relationship Manager · Mid-Corporate,199,,,,,,,,,50,true
+0ba73f55-83cb-4d2f-8ad1-40c37e6e57f4,MN006,Sameer Ali,mentor6@bank.example,,mentor,Central,MCB,Senior Relationship Manager · Mid-Corporate,210,,,,,,,,,50,true
+3eba234b-5a16-4471-a3dc-32c3e9a7cafe,MN007,Nandini Rao,mentor7@bank.example,,mentor,North,MCB,Product Head · Mid-Corporate,221,,,,,,,,,50,true
+0a19bc71-6d67-498b-8998-25fcda289530,MN008,Pradeep Gupta,mentor8@bank.example,,mentor,South,MCB,Senior Credit Partner · Mid-Corporate,232,,,,,,,,,50,true
+ffe72066-41ac-412a-98d5-f6bb59efedcc,MN009,Swati Jain,mentor9@bank.example,,mentor,Central,ECB,Senior Relationship Manager · Emerging Corporates,147,,,,,,,,,50,true
+9e1a727f-2f6d-48ff-b4cc-9b325836a254,MN010,Venkatesh Murthy,mentor10@bank.example,,mentor,North,ECB,Senior Relationship Manager · Emerging Corporates,158,,,,,,,,,50,true
+3c279d72-9f0b-40d2-aa72-8d4657ff26aa,MN011,Ritu Arora,mentor11@bank.example,,mentor,South,ECB,Product Head · Emerging Corporates,169,,,,,,,,,50,true
+eddc0878-af52-4e84-9735-18ee4ea364d3,MN012,Imran Shaikh,mentor12@bank.example,,mentor,East,ECB,Senior Credit Partner · Emerging Corporates,180,,,,,,,,,50,true
+3b5f9b46-f47e-4f5c-b433-99b51e461103,MN013,Lakshmi Narayan,mentor13@bank.example,,mentor,North,TXB,Senior Relationship Manager · Transaction Banking,191,,,,,,,,,50,true
+4829023a-98bc-441a-abc6-ded4d058c2d9,MN014,Tarun Mehra,mentor14@bank.example,,mentor,South,TXB,Senior Relationship Manager · Transaction Banking,202,,,,,,,,,50,true
+9a1e14fc-2bc7-49a1-a2a2-ed7ddb516b55,MN015,Divya Krishnan,mentor15@bank.example,,mentor,East,TXB,Product Head · Transaction Banking,213,,,,,,,,,50,true
+8e4a302d-bf79-4851-9502-ba136afb8962,MN016,Abhishek Roy,mentor16@bank.example,,mentor,West,TXB,Senior Credit Partner · Transaction Banking,224,,,,,,,,,50,true
+725bf9b2-6798-4d55-bf99-69e75696d129,MN017,Geeta Pandey,mentor17@bank.example,,mentor,South,TSF,Senior Relationship Manager · Trade & SCF,235,,,,,,,,,50,true
+0ef3be39-a1b0-4272-a3bb-98661a6125fb,MN018,Mohit Bansal,mentor18@bank.example,,mentor,East,TSF,Senior Relationship Manager · Trade & SCF,150,,,,,,,,,50,true
+e38d1a70-d48b-448b-8816-1929006710e1,MN019,Shreya Kapoor,mentor19@bank.example,,mentor,West,TSF,Product Head · Trade & SCF,161,,,,,,,,,50,true
+005ec853-dd11-44d0-9f80-c24a65ebbacf,MN020,Ravi Shankar,mentor20@bank.example,,mentor,Central,TSF,Senior Credit Partner · Trade & SCF,172,,,,,,,,,50,true

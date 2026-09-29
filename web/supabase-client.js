@@ -71,6 +71,26 @@ export const api = {
   createJoinee: (row) => sb.rpc("hr_create_joinee", { p: row }),
   createJoinees: (rows) => sb.rpc("hr_create_joinees", { p_rows: rows }),   // per-row {ok, error}
 
+  withdrawJoinee: (traineeId, reason) => sb.rpc("hr_withdraw_joinee", { p_trainee: traineeId, p_reason: reason }),
+  decideReview: (traineeId, decision, notes) =>        // decision: extend | exit
+    sb.rpc("hr_decide_review", { p_trainee: traineeId, p_decision: decision, p_notes: notes }),
+
+  // State store: private screen state per person (last page, open day, filters, drafts)
+  loadUiState: () => sb.from("ui_state").select("key, value"),
+  saveUiState: (key, value) => sb.rpc("save_ui_state", { p_key: key, p_value: value }),
+  // Live updates: call onChange whenever one of these tables changes (enable Realtime on them)
+  subscribe: (tables, onChange) => {
+    const ch = sb.channel("academy-live");
+    tables.forEach((t) => ch.on("postgres_changes", { event: "*", schema: "public", table: t }, onChange));
+    return ch.subscribe();
+  },
+  rateShadow: (logId, competencies, feedback) =>
+    sb.rpc("rate_shadow_log", { p_log: logId, p_competencies: competencies, p_feedback: feedback }),
+  completeRemediation: (assignmentId) => sb.rpc("complete_remediation", { p_assignment: assignmentId }),
+  learningItems: () => sb.from("learning_items").select("id, day_no, sort, title, kind").order("day_no").order("sort"),
+  myProgress: () => sb.from("progress").select("item_id, status"),
+  myShadowLogs: () => sb.from("shadow_logs").select("*").order("created_at"),
+
   // Coaches
   myCoachingQueue: () => sb.from("v_my_coaching_queue").select("*").order("sla_due"),
   recordCoaching: (sessionId, decision, notes, repeatModules = []) =>

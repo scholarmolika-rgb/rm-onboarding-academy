@@ -1,0 +1,39 @@
+id,module_id,day_no,title,kind,storage_path,est_minutes,mandatory,sort
+1,1,3,Data privacy (DPDP Act 2023) & information security,read,01-governance/day03-data-privacy.md,45,true,2
+2,1,3,AML red flags — 10 case vignettes,case,01-governance/day03-aml-cases.md,90,true,1
+3,1,2,KYC / CDD / EDD and beneficial ownership walk-through,worksheet,working-files/kyc-checklist.csv,60,true,2
+4,1,2,"Regulatory map: RBI, SEBI, FEMA, PMLA — what an RM must know",read,01-governance/day02-regulatory-map.md,90,true,1
+5,1,1,"Code of conduct, conflict of interest, gifts & whistleblowing",read,01-governance/day01-code-of-conduct.md,45,true,2
+6,1,1,"Welcome, bank structure & how the corporate bank makes money",read,01-governance/day01-bank-structure.md,60,true,1
+7,2,5,"POSH, diversity & respectful workplace",read,02-people/day05-posh.md,30,true,2
+8,2,5,Consultative conversations: needs discovery & objection handling,simulation,02-people/day05-consultative-selling.md,90,true,1
+9,2,4,"Internal stakeholder map: credit, ops, treasury, trade, legal",worksheet,working-files/stakeholder-map.csv,45,true,2
+10,2,4,"The RM role, KRAs and a day in the life",read,02-people/day04-rm-role.md,60,true,1
+11,3,10,"Product-fit case: design the facility structure for ""Apex Auto Components""",case,03-product/day10-product-case.md,60,true,2
+12,3,10,Treasury & FX hedging for corporates; liability products,read,03-product/day10-treasury-liabilities.md,90,true,1
+13,3,9,"Transaction banking: cash management, payroll, supply chain finance",read,03-product/day09-transaction-banking.md,90,true,1
+14,3,8,"Trade finance: LC, BG, bill discounting, PCFC",read,03-product/day08-trade-finance.md,90,true,1
+15,3,7,"Term loans, project finance basics, DSCR",read,03-product/day07-term-loans.md,90,true,1
+16,3,6,Drawing power calculator,worksheet,working-files/RM_Pricing_and_PnL_Workbook.xlsx#DrawingPower,45,true,2
+17,3,6,"Working capital: CC, OD, WCDL, drawing power",read,03-product/day06-working-capital.md,90,true,1
+18,4,14,"Complaints, grievance redressal & CRM hygiene",read,04-process/day14-grievance-crm.md,45,true,2
+19,4,14,"Monitoring: EWS, SMA-0/1/2, NPA norms, renewals",read,04-process/day14-monitoring.md,90,true,1
+20,4,13,"Sanction, documentation, security creation & disbursement",read,04-process/day13-documentation.md,90,true,1
+21,4,12,Credit appraisal & writing a Credit Appraisal Memo (CAM),worksheet,04-process/day12-cam-template.md,120,true,1
+22,4,11,Client onboarding journey & account opening TAT,read,04-process/day11-onboarding.md,60,true,1
+23,5,18,"Fee income, trade & CMS pricing; deviation approvals",read,05-pricing-pnl/day18-fees-deviations.md,60,true,1
+24,5,17,Loan pricing & RAROC calculator,worksheet,working-files/RM_Pricing_and_PnL_Workbook.xlsx#Pricing,60,true,2
+25,5,17,"Risk-based pricing: PD × LGD × EAD, capital charge, RAROC",read,05-pricing-pnl/day17-raroc.md,90,true,1
+26,5,16,"How loans are priced: EBLR/MCLR, FTP, spread build-up",read,05-pricing-pnl/day16-pricing-basics.md,90,true,1
+27,6,20,"Portfolio P&L, wallet share & cross-sell planning",simulation,05-pricing-pnl/day20-portfolio.md,120,true,1
+28,6,19,Relationship P&L builder,worksheet,working-files/RM_Pricing_and_PnL_Workbook.xlsx#RelationshipPnL,60,true,2
+29,6,19,"Relationship P&L: NII, fees, cost, provisions, RoE",read,05-pricing-pnl/day19-relationship-pnl.md,90,true,1
+30,7,22,Shadowing playbook & competency rubric,read,06-shadowing/shadowing-playbook.md,45,true,1
+31,7,22,"Shadow day 1: observe, log & reflect",shadow_task,,420,true,2
+32,7,23,"Shadow day 2: observe, log & reflect",shadow_task,,420,true,2
+33,7,24,"Shadow day 3: observe, log & reflect",shadow_task,,420,true,2
+34,7,25,"Shadow day 4: observe, log & reflect",shadow_task,,420,true,2
+35,7,26,"Shadow day 5: observe, log & reflect",shadow_task,,420,true,2
+36,7,27,"Shadow day 6: observe, log & reflect",shadow_task,,420,true,2
+37,7,28,"Shadow day 7: observe, log & reflect",shadow_task,,420,true,2
+38,7,29,"Shadow day 8: observe, log & reflect",shadow_task,,420,true,2

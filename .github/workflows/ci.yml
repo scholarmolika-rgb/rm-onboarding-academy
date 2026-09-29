@@ -13,6 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: python3 scripts/build_question_seed.py
+      - name: State store adapter test
+        run: node scripts/store.test.mjs
       - name: Apply migrations, seed, run tests
         run: |
           set -e

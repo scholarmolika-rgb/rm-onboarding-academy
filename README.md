@@ -32,6 +32,8 @@ supabase/
     ..._assessment_integrity.sql  one-question-at-a-time delivery, server timers, integrity score, verification viva
     ..._people_model.sql    departments, personas, mentor-from-another-department rule, 1,000 seats, hr_create_joinee(s)
     ..._logins.sql          HR-issued logins only, no self sign-up, forced password change, hr_add_staff
+    ..._state_store.sql     ui_state (screen state per person), withdraw joinee, HR review decision, shadow ratings
+  csv/                      CSV files to upload in order, after_import.sql, import_all.sql, HR templates
   seed.sql                  phases, 7 modules, 38 learning items, 3 assessments, 1,000/20/20/5 org
   seed_questions.sql        generated: 58 bank questions + 40 personalised calculation variants
   functions/
@@ -43,6 +45,7 @@ content/                    readable notes per day + working files (KYC checklis
 web/src/app.template.html   the app (four interfaces + chatbot); build with scripts/build_prototype.py
 web/index.html              built app with the /content curriculum embedded – demo data
 web/supabase-client.js      the calls that replace demo data with live Supabase data
+web/store.js                the state store: one method per UI action, saves every change to Supabase
 design-system/              tokens.json, components.css, README (the design system)
 docs/                       build pathway, business case, real-world additions
 scripts/                    question seed builder, knowledge-base ingestion
@@ -103,6 +106,8 @@ Then enable `pg_cron` and `pg_net` in the dashboard and run the two `cron.schedu
 See **docs/BUILD_PATHWAY.md** for the full 10-week plan.
 
 To rebuild this project, or start a similar one, use the master prompt in **docs/MASTER_PROMPT.md**.
+
+To set up Supabase without the command line (CSV uploads in `supabase/csv/`) and connect the app so every change is saved, follow **docs/SUPABASE_SETUP_GUIDE.md**.
 
 ## Tested
 

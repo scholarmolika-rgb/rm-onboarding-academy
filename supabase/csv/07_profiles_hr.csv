@@ -1,0 +1,6 @@
+id,employee_code,full_name,email,phone,role,region,department,designation,experience_months,previous_employer,previous_role,start_date,joined_on,cohort_id,mentor_id,manager_id,hr_id,max_trainees,is_active
+7d9b404a-e407-4115-ab19-1398b2c61fc6,HR001,Anita Rao,hr1@bank.example,,hr,North,,HR Business Partner,,,,,,,,,,200,true
+5e5d2658-d245-4c35-bd5c-388e20680358,HR002,Farhan Qureshi,hr2@bank.example,,hr,South,,HR Business Partner,,,,,,,,,,200,true
+ccd0d9ca-e06a-4219-94b6-d4acbf30d402,HR003,Meera Pillai,hr3@bank.example,,hr,East,,HR Business Partner,,,,,,,,,,200,true
+35e4558d-54f7-4b87-be59-7a185a5c31b2,HR004,Sandeep Kohli,hr4@bank.example,,hr,West,,HR Business Partner,,,,,,,,,,200,true
+30c156d4-3ede-4a89-b62d-c22970402b51,HR005,Lavanya Iyer,hr5@bank.example,,hr,Central,,HR Business Partner,,,,,,,,,,200,true

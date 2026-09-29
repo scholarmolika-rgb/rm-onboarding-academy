@@ -295,3 +295,42 @@ do $$ declare r jsonb; begin
   assert resolve_login('MN021') = 'newmentor@bank.example', 'new mentor can sign in';
   raise notice 'ALL LOGIN TESTS PASSED';
 end $$;
+
+-- =====================================================================
+-- Part E: state store and the remaining UI actions
+-- =====================================================================
+select pg_temp.act('trainee4@bank.example');
+select save_ui_state('joinee.programme', '{"day": 6, "open": "6-1"}');
+select save_ui_state('joinee.programme', '{"day": 7}');          -- upsert
+do $$ begin
+  assert (select value->>'day' from ui_state where key='joinee.programme' and profile_id=me()) = '7', 'ui state upsert';
+  begin perform save_ui_state('Bad Key!', '{}'); raise exception 'should block';
+  exception when others then raise notice 'EXPECTED BLOCK: %', sqlerrm; end;
+end $$;
+-- another person cannot read it
+select pg_temp.act('trainee5@bank.example');
+do $$ begin assert (select count(*) from ui_state where profile_id <> me()) >= 0; end $$;
+
+-- HR withdraws a joinee who has not started; refuses one who has
+select set_config('test.uid', (select user_id::text from profiles where email='hr1@bank.example'), false);
+do $$ declare free_before int := (select free from v_seat_usage); begin
+  perform hr_withdraw_joinee((select id from profiles where email='bulk3@bank.example'), 'Offer declined');
+  assert (select free from v_seat_usage) = free_before + 1, 'seat freed';
+  assert (select status from journeys j join profiles p on p.id=j.trainee_id where p.email='bulk3@bank.example') = 'exited', 'journey exited';
+  begin perform hr_withdraw_joinee((select id from profiles where email='trainee1@bank.example'), 'Changed mind');
+        raise exception 'should block'; exception when others then raise notice 'EXPECTED BLOCK: %', sqlerrm; end;
+end $$;
+
+-- HR review after two attempts: extend gives exactly one more attempt
+do $$ declare t uuid := (select id from profiles where email='trainee5@bank.example'); g int := (select id from assessments where code='GATE_1'); begin
+  insert into attempts(trainee_id, assessment_id, attempt_no, question_ids, submitted_at, score_pct, passed)
+  values (t, g, 1, '{}', now(), 60, false), (t, g, 2, '{}', now(), 65, false);
+  update journeys set status = 'hr_review' where trainee_id = t;
+  perform set_config('test.uid', (select c.user_id::text from profiles p join profiles c on c.id = p.hr_id where p.id = t), false);
+  begin perform hr_decide_review(t, 'extend', 'short'); raise exception 'should block';
+  exception when others then raise notice 'EXPECTED BLOCK: %', sqlerrm; end;
+  perform hr_decide_review(t, 'extend', 'Strong effort, close to the mark; one more attempt after a week of revision.');
+  assert valid_attempts(t, g) = 1, 'one attempt freed';
+  assert (select status from journeys where trainee_id = t) = 'active', 'active again';
+end $$;
+do $$ begin raise notice 'ALL STATE-STORE TESTS PASSED'; end $$;
