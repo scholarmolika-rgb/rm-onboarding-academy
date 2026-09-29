@@ -1,0 +1,518 @@
+<title>RM Onboarding Academy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap">
+<style>
+/* Layout: fixed left rail of roles on desktop (top tabs on phone); ledger-like panels with hairline rules; one accent (ink blue). */
+:root{
+  --bg:#F5F6F8; --surface:#FFFFFF; --sunken:#EEF1F4; --line:#DDE2E8; --line-strong:#C6CDD6;
+  --ink:#16223A; --text:#27313F; --muted:#5E6878; --faint:#8A93A1;
+  --accent:#1F4E79; --accent-soft:#E6EDF5; --on-accent:#FFFFFF;
+  --good:#2E7457; --good-soft:#E4F1EA; --warn:#9A6412; --warn-soft:#F7EEDD; --crit:#A8321F; --crit-soft:#F7E4E0;
+  --f-display:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r-sm:4px; --r-md:6px; --r-lg:10px;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#10151D; --surface:#171E28; --sunken:#1D2531; --line:#2A3441; --line-strong:#3A4555;
+  --ink:#E8EDF3; --text:#D3DAE3; --muted:#9AA5B4; --faint:#6F7A89;
+  --accent:#7FA8D6; --accent-soft:#1F2F44; --on-accent:#0E1520;
+  --good:#6DBB95; --good-soft:#193127; --warn:#D9A554; --warn-soft:#33281A; --crit:#E0806E; --crit-soft:#3A201B; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#10151D; --surface:#171E28; --sunken:#1D2531; --line:#2A3441; --line-strong:#3A4555;
+  --ink:#E8EDF3; --text:#D3DAE3; --muted:#9AA5B4; --faint:#6F7A89;
+  --accent:#7FA8D6; --accent-soft:#1F2F44; --on-accent:#0E1520;
+  --good:#6DBB95; --good-soft:#193127; --warn:#D9A554; --warn-soft:#33281A; --crit:#E0806E; --crit-soft:#3A201B; color-scheme:dark }
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--f-body);font-size:14px;line-height:1.55}
+h1,h2,h3{font-family:var(--f-display);color:var(--ink);text-wrap:balance;margin:0;font-weight:600}
+h1{font-size:1.6rem;line-height:1.2} h2{font-size:1.2rem} h3{font-size:1rem;font-family:var(--f-body);font-weight:600}
+p{margin:0} .muted{color:var(--muted)} .num{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--f-mono);font-size:.82rem}
+.eyebrow{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100%}
+.rail{background:var(--surface);border-right:1px solid var(--line);padding-block:var(--s5);padding-inline:var(--s4);display:flex;flex-direction:column;gap:var(--s5);position:sticky;top:env(safe-area-inset-top,0px);height:100vh}
+.brand{display:flex;gap:var(--s3);align-items:center}
+.mark{width:34px;height:34px;border-radius:var(--r-md);background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-family:var(--f-display);font-weight:600}
+.brand b{display:block;color:var(--ink);font-size:.95rem;line-height:1.2}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav button{all:unset;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:var(--r-md);color:var(--text)}
+.nav button:hover{background:var(--sunken)}
+.nav button[aria-current="page"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.nav .who{font-size:.72rem;color:var(--faint)}
+.rail-foot{margin-top:auto;font-size:.75rem;color:var(--faint)}
+
+main{padding-block:var(--s6);padding-inline:clamp(16px,3vw,40px);display:flex;flex-direction:column;gap:var(--s5);min-width:0}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:var(--s4);flex-wrap:wrap}
+.head .sub{max-width:62ch;margin-top:6px;color:var(--muted)}
+.demo-tag{font-size:.72rem;border:1px solid var(--line-strong);border-radius:99px;padding:2px 10px;color:var(--muted)}
+
+.grid{display:grid;gap:var(--s4)}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))} .g3{grid-template-columns:repeat(3,minmax(0,1fr))} .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g-main{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--s5);display:flex;flex-direction:column;gap:var(--s4);min-width:0}
+.panel-h{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s3);flex-wrap:wrap}
+.stat{padding:var(--s4) var(--s5);gap:4px}
+.stat .v{font-size:1.7rem;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.1}
+.stat .d{font-size:.8rem;color:var(--muted)}
+
+.pill{display:inline-flex;align-items:center;gap:6px;padding:2px 9px;border-radius:99px;font-size:.75rem;font-weight:500;white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.p-good{background:var(--good-soft);color:var(--good)} .p-warn{background:var(--warn-soft);color:var(--warn)}
+.p-crit{background:var(--crit-soft);color:var(--crit)} .p-info{background:var(--accent-soft);color:var(--accent)} .p-mute{background:var(--sunken);color:var(--muted)}
+
+.btn{cursor:pointer;border:1px solid var(--line-strong);background:var(--surface);border-radius:var(--r-md);padding:7px 14px;font-weight:500}
+.btn:hover{background:var(--sunken)}
+.btn-primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.btn-primary:hover{filter:brightness(1.08);background:var(--accent)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:var(--s3);align-items:center;flex-wrap:wrap}
+
+table{border-collapse:collapse;width:100%;font-size:.85rem}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line-strong)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.r,th.r{text-align:right}
+.tscroll{overflow-x:auto}
+
+/* journey */
+.journey{display:grid;grid-template-columns:repeat(30,minmax(0,1fr));gap:3px}
+.day{aspect-ratio:1/1.35;border-radius:3px;background:var(--sunken);display:grid;place-items:end center;font-size:.62rem;color:var(--faint);padding-bottom:2px;position:relative;max-width:100%}
+.day.done{background:var(--accent);color:var(--on-accent);opacity:.85}
+.day.today{outline:2px solid var(--accent);outline-offset:1px;background:var(--accent-soft);color:var(--accent);font-weight:600}
+.day.gate{background:var(--warn-soft);color:var(--warn);font-weight:600}
+.day.gate.done{background:var(--good);color:var(--on-accent)}
+.phases{display:grid;grid-template-columns:15fr 6fr 9fr;gap:3px;font-size:.75rem;color:var(--muted)}
+.phases div{border-top:2px solid var(--line-strong);padding-top:4px}
+
+.items{display:flex;flex-direction:column}
+.item{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:var(--s3);align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.check{width:18px;height:18px;border:1.5px solid var(--line-strong);border-radius:4px;display:grid;place-items:center;cursor:pointer;background:var(--surface)}
+.check.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.kind{font-size:.7rem;font-family:var(--f-mono);color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 6px}
+
+.bar{height:8px;border-radius:4px;background:var(--sunken);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.hbars{display:flex;flex-direction:column;gap:10px}
+.hbar{display:grid;grid-template-columns:150px minmax(0,1fr) 56px;gap:var(--s3);align-items:center;font-size:.85rem}
+.hbar .track{height:14px;background:var(--sunken);border-radius:3px;overflow:hidden}
+.hbar .track i{display:block;height:100%}
+
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s3)}
+.step{border:1px solid var(--line);border-radius:var(--r-md);padding:var(--s3) var(--s4);display:flex;flex-direction:column;gap:4px;background:var(--surface)}
+.step .t{font-weight:600;color:var(--ink);font-size:.9rem}
+.step.gate{border-color:var(--warn);background:var(--warn-soft)}
+.step small{color:var(--muted)}
+
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:var(--muted)}
+label.f input,label.f select,textarea{border:1px solid var(--line-strong);border-radius:var(--r-md);padding:7px 10px;background:var(--surface);color:var(--text);font-size:.9rem}
+textarea{width:100%;min-height:84px;resize:vertical}
+.roi-out{display:flex;flex-direction:column;gap:2px;padding:var(--s4);border-radius:var(--r-md);background:var(--sunken)}
+.roi-out .v{font-size:1.4rem;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+
+.quiz-q{display:flex;flex-direction:column;gap:var(--s2);padding:var(--s4) 0;border-bottom:1px solid var(--line)}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-md);cursor:pointer}
+.opt:hover{background:var(--sunken)}
+.opt input{margin-top:3px;accent-color:var(--accent)}
+.opt.right{border-color:var(--good);background:var(--good-soft)} .opt.wrong{border-color:var(--crit);background:var(--crit-soft)}
+
+.dflow{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:10px}
+.dflow li{padding-left:4px}
+.dflow li::marker{color:var(--accent);font-weight:600}
+.callout{border-left:3px solid var(--accent);background:var(--accent-soft);padding:var(--s3) var(--s4);border-radius:0 var(--r-md) var(--r-md) 0;font-size:.88rem}
+.callout.warn{border-color:var(--warn);background:var(--warn-soft)}
+.callout.crit{border-color:var(--crit);background:var(--crit-soft)}
+.mail{border:1px solid var(--line);border-radius:var(--r-md);padding:var(--s3) var(--s4);display:flex;flex-direction:column;gap:2px;font-size:.84rem}
+.mail .to{font-family:var(--f-mono);font-size:.75rem;color:var(--muted);overflow-wrap:anywhere}
+
+/* chat */
+.fab{position:fixed;right:20px;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:20;border-radius:99px;padding:11px 18px;box-shadow:0 6px 20px rgba(16,24,40,.18)}
+.drawer{position:fixed;right:20px;bottom:calc(76px + env(safe-area-inset-bottom,0px));width:min(400px,calc(100vw - 32px));height:min(560px,calc(100vh - 120px));background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-lg);box-shadow:0 12px 40px rgba(16,24,40,.22);display:flex;flex-direction:column;z-index:21}
+.drawer header{padding:var(--s3) var(--s4);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.msgs{flex:1;overflow-y:auto;padding:var(--s4);display:flex;flex-direction:column;gap:var(--s3)}
+.msg{max-width:88%;padding:9px 12px;border-radius:var(--r-lg);font-size:.86rem;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.u{align-self:flex-end;background:var(--accent);color:var(--on-accent);border-bottom-right-radius:3px}
+.msg.a{align-self:flex-start;background:var(--sunken);border-bottom-left-radius:3px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 var(--s4) var(--s2)}
+.chip{cursor:pointer;border:1px solid var(--line-strong);background:var(--surface);border-radius:99px;padding:3px 10px;font-size:.75rem}
+.chat-in{display:flex;gap:var(--s2);padding:var(--s3);border-top:1px solid var(--line)}
+.chat-in input{flex:1;min-width:0;border:1px solid var(--line-strong);border-radius:var(--r-md);padding:8px 10px;background:var(--surface)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:var(--r-md);font-size:.85rem;z-index:30;max-width:calc(100vw - 32px)}
+
+@media (max-width:980px){ .g4{grid-template-columns:repeat(2,minmax(0,1fr))} .g-main,.g3{grid-template-columns:minmax(0,1fr)} .flow{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:760px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .rail{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding-block:var(--s3);gap:var(--s3)}
+  .nav{flex-direction:row;overflow-x:auto} .nav button{white-space:nowrap} .nav .who,.rail-foot{display:none}
+  .g2{grid-template-columns:minmax(0,1fr)} .hbar{grid-template-columns:100px minmax(0,1fr) 48px}
+  .journey{grid-template-columns:repeat(15,minmax(0,1fr))} .phases{display:none}
+}
+@media (max-width:440px){ .g4{grid-template-columns:minmax(0,1fr)} .flow{grid-template-columns:minmax(0,1fr)} }
+@media (prefers-reduced-motion:no-preference){ .bar i,.hbar .track i{transition:width .5s ease} }
+</style>
+
+<div class="app">
+  <aside class="rail">
+    <div class="brand"><div class="mark">RM</div><div><b>Onboarding Academy</b><span class="eyebrow">Corporate Banking</span></div></div>
+    <nav class="nav" id="nav" aria-label="Views">
+      <button data-v="leadership">Business case <span class="who">Leadership</span></button>
+      <button data-v="trainee">My journey <span class="who">Trainee</span></button>
+      <button data-v="mentor">Coaching <span class="who">Mentor</span></button>
+      <button data-v="manager">My team <span class="who">Reporting mgr</span></button>
+      <button data-v="hr">Programme ops <span class="who">HR</span></button>
+      <button data-v="design">How it works <span class="who">Rules & flow</span></button>
+    </nav>
+    <div class="rail-foot">Cohort 2026-10 · 1,000 trainees · 20 mentors · 20 reporting managers · 5 HR partners<br><br>Prototype with demo data. Production runs on Supabase.</div>
+  </aside>
+  <main id="main"></main>
+</div>
+<button class="btn btn-primary fab" id="fab">Ask the Academy</button>
+<div class="drawer" id="drawer" hidden>
+  <header><div><h3>Academy Assistant</h3><span class="muted" style="font-size:.75rem">Answers from training content · never share customer data</span></div><button class="btn" id="closeChat" aria-label="Close assistant">Close</button></header>
+  <div class="msgs" id="msgs"></div>
+  <div class="chips" id="chips"></div>
+  <form class="chat-in" id="chatForm"><input id="chatInput" placeholder="Ask about KYC, drawing power, RAROC…" autocomplete="off"><button class="btn btn-primary" id="chatSend">Send</button></form>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+// ---------------- Demo data (deterministic) ----------------
+let seed=42; const rnd=()=>{seed=(seed*16807)%2147483647;return (seed-1)/2147483646};
+const FN=['Aarav','Diya','Kabir','Ishita','Rohan','Sneha','Vikram','Ananya','Arjun','Priya','Nikhil','Tanvi','Rahul','Kavya','Siddharth','Pooja','Aditya','Neha','Varun','Riya'];
+const LN=['Sharma','Reddy','Iyer','Mehta','Nair','Gupta','Das','Kulkarni','Singh','Banerjee','Patel','Menon','Joshi','Rao','Chawla'];
+const TODAY_DAY=15; // cohort sits on Day 15 (Gate 1) in the demo
+const trainees=[];
+for(let i=1;i<=1000;i++){
+  const mentor=1+Math.floor((i-1)/50); const r=rnd();
+  let status='active', g1=null, risk=Math.round(rnd()*35);
+  const done=Math.min(14,10+Math.floor(rnd()*5));
+  if(r<0.62){g1=80+Math.round(rnd()*18);status='passed_gate1'}
+  else if(r<0.80){g1=62+Math.round(rnd()*17);status='coaching';risk+=35}
+  else if(r<0.86){g1=65+Math.round(rnd()*14);status='remediation';risk+=40}
+  else if(r<0.97){status='due';}
+  else {status='inactive';risk+=45}
+  trainees.push({id:i,code:'TRN'+String(i).padStart(4,'0'),name:FN[i%20]+' '+LN[(i*7)%15],mentor,cluster:'Cluster '+mentor,done,g1,status,risk:Math.min(95,risk)});
+}
+const ME=trainees[1]; ME.status='due'; ME.g1=null; ME.done=14; ME.risk=12; // Diya Kulkarni, TRN0002, mentor 1
+const outbox=[
+ {t:'08:02',tpl:'Coaching required',to:['mentor4@bank.example','manager4@bank.example','hr4@bank.example'],sub:'Action required: 1-day coaching for Rohan Gupta (TRN0154)'},
+ {t:'07:40',tpl:'Coaching overdue',to:['hr2@bank.example','manager7@bank.example'],sub:'Overdue coaching for Tanvi Menon (TRN0331)'},
+];
+const coaching={}; // trainee id -> {mentor:null|{d,notes,mods}, manager:..., hr:...}
+// pre-existing coaching items for Mentor 1's queue
+trainees.filter(t=>t.mentor===1&&t.status==='coaching').slice(0,3).forEach(t=>coaching[t.id]={gate:'GATE_1',score:t.g1,mentor:null,manager:null,hr:null,mods:{GOV:55+Math.round(rnd()*30),PPL:70+Math.round(rnd()*25),PRD:55+Math.round(rnd()*35),PRC:50+Math.round(rnd()*35)}});
+
+const CURRICULUM=[
+ {d:1,m:'GOV',items:[['read','Bank structure & how the corporate bank earns'],['read','Code of conduct, conflicts & gifts']]},
+ {d:2,m:'GOV',items:[['read','Regulatory map: RBI, PMLA, FEMA, DPDP'],['worksheet','KYC / beneficial ownership checklist']]},
+ {d:3,m:'GOV',items:[['case','AML red flags — 5 vignettes'],['read','Data privacy & infosec']]},
+ {d:4,m:'PPL',items:[['read','The RM role and KRAs'],['worksheet','Internal stakeholder map']]},
+ {d:5,m:'PPL',items:[['simulation','Consultative discovery role-play'],['read','POSH & respectful workplace']]},
+ {d:6,m:'PRD',items:[['read','Working capital: CC, OD, WCDL'],['worksheet','Drawing power calculator']]},
+ {d:7,m:'PRD',items:[['read','Term loans & DSCR']]},{d:8,m:'PRD',items:[['read','Trade finance: LC, BG, PCFC']]},
+ {d:9,m:'PRD',items:[['read','Transaction banking: CMS, payroll, SCF']]},
+ {d:10,m:'PRD',items:[['read','Treasury & FX hedging'],['case','Apex Auto Components facility design']]},
+ {d:11,m:'PRC',items:[['read','Client onboarding journey']]},{d:12,m:'PRC',items:[['worksheet','Write a Credit Appraisal Memo']]},
+ {d:13,m:'PRC',items:[['read','Sanction, documentation, CERSAI']]},
+ {d:14,m:'PRC',items:[['read','EWS, SMA and NPA norms'],['read','Complaints & CRM hygiene']]},
+ {d:15,m:'GATE',items:[['assessment','Day 15 Foundation Assessment · pass 80%']]},
+];
+const MODULES={GOV:'Governance, Regulation & Conduct',PPL:'People, Culture & the RM Role',PRD:'Corporate Banking Products',PRC:'Credit & Operating Processes'};
+
+const BANK=[
+ {m:'GOV',q:'To which authority does a bank file CTRs and STRs?',o:['Reserve Bank of India','FIU-IND','SEBI','Enforcement Directorate'],a:1},
+ {m:'GOV',q:'For a company, a beneficial owner holds an ownership interest of:',o:['More than 25%','More than 10%','More than 51%','Any shareholding'],a:1},
+ {m:'GOV',q:'A client with a loan pending sanction sends you an expensive watch. You:',o:['Accept it','Accept and declare after sanction','Decline and report under the gifts policy','Pass it to your mentor'],a:2},
+ {m:'PPL',q:'The best opening in a first meeting with a mid-corporate prospect is:',o:['Present the brochure','Quote the lowest rate','Open questions on business cycle and cash conversion','Ask for three years of financials'],a:2},
+ {m:'PRD',q:'Stock ₹100 Cr, receivables ₹60 Cr, creditors ₹40 Cr, margin 25%. Drawing power?',o:['₹120 Cr','₹90 Cr','₹75 Cr','₹160 Cr'],a:1},
+ {m:'PRD',q:'An importer with USD payables in 90 days fears rupee depreciation. Simplest hedge?',o:['Sell USD forward','Buy USD forward','Open an FD','Take a term loan'],a:1},
+ {m:'PRC',q:'A term-loan instalment is overdue by 45 days. The account is:',o:['SMA-0','SMA-1','SMA-2','NPA'],a:1},
+ {m:'PRC',q:'Security interest must be registered with CERSAI within:',o:['7 days','30 days','60 days','90 days'],a:1},
+ {m:'PRC',q:'Periodic KYC for high-risk customers is due at least every:',o:['1 year','2 years','8 years','10 years'],a:1},
+ {m:'PRC',q:'Maker-checker means:',o:['The RM enters and approves','A second person verifies and authorises','Customers check statements','Auditors make entries'],a:1},
+];
+
+// ---------------- helpers ----------------
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const inr=v=>v<1?'₹'+Math.round(v*100)+' lakh':'₹'+(v>=100?Math.round(v).toLocaleString('en-IN'):v.toFixed(1))+' Cr';
+function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,3600)}
+function pill(status){const map={passed_gate1:['Gate 1 cleared','p-good'],coaching:['In coaching','p-warn'],remediation:['Repeating modules','p-crit'],due:['Test due today','p-info'],inactive:['Inactive 3+ days','p-crit'],active:['On track','p-good'],phase2:['Phase 2 unlocked','p-good']};const [l,c]=map[status]||[status,'p-mute'];return `<span class="pill ${c}">${l}</span>`}
+function riskPill(r){return r>=60?`<span class="pill p-crit">High ${r}</span>`:r>=35?`<span class="pill p-warn">Watch ${r}</span>`:`<span class="pill p-good">Low ${r}</span>`}
+function queueEmail(tpl,to,sub){const d=new Date();outbox.unshift({t:d.toTimeString().slice(0,5),tpl,to,sub})}
+
+// ---------------- views ----------------
+const views={};
+let quizState=null; let doneItems=new Set(CURRICULUM.filter(c=>c.d<15).flatMap(c=>c.items.map((_,j)=>c.d+'-'+j)));
+
+views.leadership=()=>{
+  const n=trainees.length, c=trainees.filter(t=>t.status==='coaching').length, rem=trainees.filter(t=>t.status==='remediation').length, pass=trainees.filter(t=>t.status==='passed_gate1'||t.status==='phase2').length, hi=trainees.filter(t=>t.risk>=60).length;
+  return `
+  <div class="head"><div><span class="eyebrow">For the Head of Corporate Banking</span><h1>What structured onboarding is worth</h1><p class="sub">Every Relationship Manager who leaves in year one takes hiring spend, training time and a share of client revenue with them. This model shows the return from a gated 30-day programme. Change any assumption to match the bank's own numbers.</p></div><span class="demo-tag">Illustrative assumptions — replace with bank data</span></div>
+  <div class="grid g4">
+    <div class="panel stat"><span class="eyebrow">Cohort</span><span class="v">${n.toLocaleString('en-IN')}</span><span class="d">new RMs on Day ${TODAY_DAY}</span></div>
+    <div class="panel stat"><span class="eyebrow">Cleared Gate 1</span><span class="v">${pass}</span><span class="d">${Math.round(pass/n*100)}% first attempt ≥ 80%</span></div>
+    <div class="panel stat"><span class="eyebrow">In coaching or repeat</span><span class="v">${c+rem}</span><span class="d">caught before they meet a client</span></div>
+    <div class="panel stat"><span class="eyebrow">High attrition risk</span><span class="v">${hi}</span><span class="d">flagged for HR follow-up now</span></div>
+  </div>
+  <div class="grid g-main">
+    <div class="panel">
+      <div class="panel-h"><h2>Return on the programme</h2><span class="muted" style="font-size:.8rem">Annual, ₹ Crore</span></div>
+      <div class="grid g3" id="roiInputs">
+        ${[['joiners','New RMs per year',1000,1],['ctc','Average CTC per RM (₹ lakh)',12,.5],['base','Year-1 attrition today (%)',30,1],['target','Year-1 attrition with programme (%)',25,1],['repl','Replacement cost (% of CTC)',75,5],['rev','Revenue per RM portfolio (₹ Cr)',3,.25],['loss','Client revenue lost per exit (%)',5,1],['build','Platform build + run (₹ Cr/yr)',1.2,.1],['coach','Coaching time cost (₹ Cr/yr)',0.6,.1]].map(([id,l,v,s])=>`<label class="f">${l}<input type="number" id="r_${id}" value="${v}" step="${s}" min="0" class="num"></label>`).join('')}
+      </div>
+      <div class="grid g2" id="roiOut"></div>
+      <p class="muted" style="font-size:.8rem">Replacement cost covers recruiter fees, notice-period gap, re-onboarding and the 4–6 months a new RM needs to reach productivity. Client revenue loss reflects relationships that follow a departing RM or leave during hand-over. Data and conduct incidents avoided are not counted, so the estimate is conservative.</p>
+    </div>
+    <div class="panel">
+      <h2>Where the cohort stands</h2>
+      <div class="hbars">${[['Gate 1 cleared',pass,'var(--good)'],['Test due today',trainees.filter(t=>t.status==='due').length,'var(--accent)'],['In 1-day coaching',c,'var(--warn)'],['Repeating modules',rem,'var(--crit)'],['Inactive 3+ days',trainees.filter(t=>t.status==='inactive').length,'var(--crit)']].map(([l,v,col])=>`<div class="hbar"><span>${l}</span><div class="track"><i style="width:${v/n*100}%;background:${col}"></i></div><span class="num" style="text-align:right">${v}</span></div>`).join('')}</div>
+      <div class="callout">A trainee cannot reach a live client until Gate 1 (80%) and Gate 2 (75%) are cleared or three coaches formally pass them. Every decision is recorded in an audit trail.</div>
+      <h3>What the bank gets beyond savings</h3>
+      <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px">
+        <li>Consistent KYC, AML and data-privacy conduct from Day 1, with evidence for audit and RBI inspection.</li>
+        <li>Early warning of flight risk from test scores, inactivity and pulse surveys.</li>
+        <li>Faster time to first revenue, because pricing and P&L are taught before the RM touches a client.</li>
+        <li>One view for leadership across 1,000 joiners, 20 clusters and 5 HR partners.</li>
+      </ul>
+    </div>
+  </div>`;
+};
+function calcROI(){
+  const g=id=>parseFloat($('#r_'+id)?.value)||0;
+  const J=g('joiners'), exitsBase=J*g('base')/100, exitsNew=J*g('target')/100, avoided=Math.max(0,exitsBase-exitsNew);
+  const perExit=g('ctc')/100*g('repl')/100 + g('rev')*g('loss')/100; // ₹ Cr
+  const benefit=avoided*perExit, cost=g('build')+g('coach'), net=benefit-cost;
+  const hireCut=exitsBase?avoided/exitsBase*100:0;
+  $('#roiOut').innerHTML=[
+    ['Exits avoided',Math.round(avoided).toLocaleString('en-IN'),`of ${Math.round(exitsBase)} today`],
+    ['Cost per exit',inr(perExit),'replacement + lost revenue'],
+    ['Net annual benefit',inr(net),`${cost?(benefit/cost).toFixed(1):'–'}× programme cost`],
+    ['Replacement hiring cut',hireCut.toFixed(0)+'%',hireCut>=10?'meets 10% goal':'below 10% goal']
+  ].map(([l,v,d])=>`<div class="roi-out"><span class="eyebrow">${l}</span><span class="v">${v}</span><span class="muted" style="font-size:.78rem">${d}</span></div>`).join('');
+}
+
+views.trainee=()=>{
+  const cells=Array.from({length:30},(_,i)=>{const d=i+1;const gate=[15,21,30].includes(d);let cls='day'+(gate?' gate':'');if(d<TODAY_DAY)cls+=' done';if(d===TODAY_DAY)cls+=' today';if(gate&&ME.status==='phase2'&&d===15)cls+=' done';return `<div class="${cls}" title="Day ${d}">${d}</div>`}).join('');
+  const today=CURRICULUM.find(c=>c.d===TODAY_DAY);
+  const recent=CURRICULUM.filter(c=>c.d>=12&&c.d<15);
+  const blocked=ME.status==='coaching'||ME.status==='remediation';
+  const c=coaching[ME.id];
+  return `
+  <div class="head"><div><span class="eyebrow">Trainee · ${ME.code} · Mentor 1 · Cluster 1</span><h1>Good morning, ${ME.name.split(' ')[0]}</h1><p class="sub">Day ${TODAY_DAY} of 30. Today is your Foundation Assessment. You need 80% to open Pricing & P&L.</p></div>${pill(ME.status)}</div>
+  <div class="panel"><div class="panel-h"><h2>Your 30 days</h2><span class="muted" style="font-size:.8rem">Weekends and bank holidays are skipped</span></div>
+    <div class="phases"><div>Days 1–15 · Governance, People, Product, Process</div><div>16–21 · Pricing & P&L</div><div>22–30 · Shadowing & sign-off</div></div>
+    <div class="journey">${cells}</div>
+    <div class="row muted" style="font-size:.78rem"><span class="pill p-warn">Gate</span> Day 15 ≥ 80% · Day 21 ≥ 75% · Day 30 final + tri-party sign-off</div>
+  </div>
+  <div class="grid g-main">
+    <div class="panel" id="assessPanel">${assessHTML()}</div>
+    <div class="panel"><h2>Recent learning</h2>
+      <div class="items">${recent.flatMap(cd=>cd.items.map((it,j)=>{const k=cd.d+'-'+j;return `<div class="item"><span class="check ${doneItems.has(k)?'on':''}" data-k="${k}" role="checkbox" aria-checked="${doneItems.has(k)}" tabindex="0">${doneItems.has(k)?'✓':''}</span><div style="min-width:0"><div>${esc(it[1])}</div><span class="muted" style="font-size:.75rem">Day ${cd.d} · ${MODULES[cd.m]}</span></div><span class="kind">${it[0]}</span></div>`})).join('')}</div>
+      <div class="callout">All mandatory items for Days 1–14 must be complete before the assessment opens. The server checks this, not the browser.</div>
+      ${c?`<h3>Your coaching</h3>${['mentor','manager','hr'].map(r=>`<div class="row" style="justify-content:space-between"><span>${{mentor:'Mentor 1',manager:'Manager 1',hr:'HR partner (North)'}[r]}</span>${c[r]?(c[r].d==='pass'?'<span class="pill p-good">Passed</span>':'<span class="pill p-crit">Repeat</span>'):'<span class="pill p-mute">Session pending</span>'}</div>`).join('')}`:''}
+    </div>
+  </div>`;
+};
+function assessHTML(){
+  if(ME.status==='phase2') return `<h2>Foundation Assessment cleared</h2><div class="callout">Phase 2, Product Pricing & P&L (Days 16–20), is now open. Your Day 21 assessment needs 75%.</div><p class="muted">Open the pricing workbook to start Day 16.</p>`;
+  if(ME.status==='coaching') return `<h2>Coaching in progress</h2><p>You scored <b class="num">${ME.g1}%</b>. Your mentor, reporting manager and HR partner will each spend a day with you. After all three sessions they decide together whether you move on or revisit specific modules.</p><div class="callout warn">Email sent to Mentor 1, Manager 1 and HR partner. Switch to <b>Coaching</b> in the left menu to see what your mentor sees.</div>`;
+  if(ME.status==='remediation') return `<h2>Refresher assigned</h2><p>Your coaches asked you to revisit: <b>${(coaching[ME.id].repeat||[]).map(m=>MODULES[m]).join(', ')}</b>. When you complete them, your second and final attempt opens.</p><button class="btn btn-primary" id="finishRem">Mark refresher complete</button>`;
+  if(!quizState) return `<div class="panel-h"><h2>Day 15 Foundation Assessment</h2><span class="pill p-info">Pass mark 80%</span></div>
+   <p>${BANK.length} questions drawn at random from Governance, People, Product and Process. 40 minutes. Attempt ${coaching[ME.id]?.attempt2?'2 of 2':'1 of 2'}.</p>
+   <div class="row"><button class="btn btn-primary" id="startQuiz">Start assessment</button><button class="btn" id="failFast" title="Demo shortcut">Demo: submit a failing attempt</button></div>
+   <p class="muted" style="font-size:.8rem">Below 80%, an email goes to your Mentor, Reporting Manager and HR partner, and each schedules a one-day coaching session with you.</p>`;
+  return `<div class="panel-h"><h2>Day 15 Foundation Assessment</h2><span class="muted num">${Object.keys(quizState.ans).length}/${BANK.length} answered</span></div>
+   ${BANK.map((q,i)=>`<div class="quiz-q"><div><span class="kind">${q.m}</span> <b>${i+1}.</b> ${esc(q.q)}</div>${q.o.map((o,j)=>`<label class="opt ${quizState.done?(j===q.a?'right':(quizState.ans[i]===j?'wrong':'')):''}"><input type="radio" name="q${i}" data-q="${i}" data-o="${j}" ${quizState.ans[i]===j?'checked':''} ${quizState.done?'disabled':''}><span>${esc(o)}</span></label>`).join('')}</div>`).join('')}
+   <div class="row"><button class="btn btn-primary" id="submitQuiz" ${Object.keys(quizState.ans).length<BANK.length?'disabled':''}>Submit</button></div>`;
+}
+function submitAttempt(score, mods){
+  ME.g1=score;
+  if(score>=80){ME.status='phase2';queueEmail('Next phase unlocked',['trainee2@bank.example'],'Next phase unlocked');toast(`Scored ${score}%. Phase 2 unlocked.`);}
+  else{
+    ME.status='coaching';
+    coaching[ME.id]={gate:'GATE_1',score,mentor:null,manager:null,hr:null,mods,attempt2:!!coaching[ME.id]};
+    queueEmail('Coaching required',['mentor1@bank.example','manager1@bank.example','hr1@bank.example'],`Action required: 1-day coaching for ${ME.name} (${ME.code})`);
+    queueEmail('Coaching scheduled',['trainee2@bank.example'],'Your personalised coaching sessions are scheduled');
+    toast(`Scored ${score}%. Email sent to Mentor, Reporting Manager and HR.`);
+  }
+  quizState=null; render();
+}
+
+function coachView(role){
+  const label={mentor:'Mentor 1 · Senior RM, Cluster 1',manager:'Manager 1 · Cluster Head, Cluster 1'}[role]||'HR partner · North';
+  const queue=Object.entries(coaching).filter(([id,c])=>!c[role]).map(([id,c])=>({t:trainees[id-1],c}));
+  const team=role==='hr'?trainees.filter(t=>(t.mentor-1)%5===0):trainees.filter(t=>t.mentor===1);
+  return `
+  <div class="head"><div><span class="eyebrow">${label}</span><h1>${role==='mentor'?'Coaching queue':role==='manager'?'My team':'Coaching decisions'}</h1><p class="sub">Each trainee who misses a gate gets one day with each coach. Record the outcome after your session. If any coach asks for a repeat, the named modules are assigned and a re-test follows.</p></div><span class="pill ${queue.length?'p-warn':'p-good'}">${queue.length} awaiting your decision</span></div>
+  <div class="grid g-main">
+    <div class="panel"><h2>Awaiting your session</h2>
+      ${queue.length?queue.map(({t,c})=>`<div class="panel" style="padding:var(--s4);gap:var(--s3);background:var(--bg)">
+        <div class="panel-h"><div><b>${esc(t.name)}</b> <span class="mono muted">${t.code}</span></div><span class="pill p-warn">${c.gate==='GATE_1'?'Gate 1':'Gate 2'} · ${c.score}%</span></div>
+        <div class="row" style="gap:var(--s4)">${Object.entries(c.mods).map(([m,v])=>`<div style="min-width:90px"><span class="eyebrow">${m}</span><div class="bar"><i style="width:${v}%;background:${v<70?'var(--crit)':v<80?'var(--warn)':'var(--good)'}"></i></div><span class="num" style="font-size:.78rem">${v}%</span></div>`).join('')}</div>
+        <div class="row muted" style="font-size:.78rem">Other coaches: ${['mentor','manager','hr'].filter(r=>r!==role).map(r=>`${r==='hr'?'HR':r[0].toUpperCase()+r.slice(1)} ${c[r]?(c[r].d==='pass'?'✓ pass':'↺ repeat'):'pending'}`).join(' · ')}</div>
+        <label class="f">Session notes (min. 30 characters, kept in the audit trail)<textarea id="n_${t.id}" placeholder="What you covered, strengths, gaps, and your reasoning"></textarea></label>
+        <div class="row" style="font-size:.85rem">Repeat modules: ${Object.keys(MODULES).map(m=>`<label class="row" style="gap:4px"><input type="checkbox" id="m_${t.id}_${m}" ${c.mods[m]<70?'checked':''}> ${m}</label>`).join('')}</div>
+        <div class="row"><button class="btn btn-primary" data-dec="pass" data-t="${t.id}" data-r="${role}">Pass to next phase</button><button class="btn" data-dec="repeat" data-t="${t.id}" data-r="${role}">Repeat selected modules</button></div>
+      </div>`).join(''):`<p class="muted">No sessions waiting. New escalations arrive here and by email the moment a trainee misses a gate.</p>`}
+    </div>
+    <div class="panel"><h2>${role==='hr'?'Your 200 trainees':'Your 50 trainees'}</h2>
+      <div class="hbars">${[['Gate 1 cleared','passed_gate1','var(--good)'],['Test due','due','var(--accent)'],['Coaching','coaching','var(--warn)'],['Repeating','remediation','var(--crit)'],['Inactive','inactive','var(--crit)']].map(([l,s,col])=>{const v=team.filter(t=>t.status===s||(s==='passed_gate1'&&t.status==='phase2')).length;return `<div class="hbar"><span>${l}</span><div class="track"><i style="width:${v/team.length*100}%;background:${col}"></i></div><span class="num" style="text-align:right">${v}</span></div>`}).join('')}</div>
+      <div class="tscroll"><table><thead><tr><th>Trainee</th><th class="r">Gate 1</th><th>Risk</th></tr></thead><tbody>${team.slice().sort((a,b)=>b.risk-a.risk).slice(0,8).map(t=>`<tr><td>${esc(t.name)}<br><span class="mono muted">${t.code}</span></td><td class="r num">${t.g1??'—'}</td><td>${riskPill(t.risk)}</td></tr>`).join('')}</tbody></table></div>
+    </div>
+  </div>`;
+}
+views.mentor=()=>coachView('mentor');
+views.manager=()=>coachView('manager');
+
+function decide(id,role,d){
+  const c=coaching[id], notes=($('#n_'+id)?.value||'').trim();
+  if(notes.length<30){toast('Add at least 30 characters of session notes before recording a decision.');$('#n_'+id)?.focus();return}
+  const mods=Object.keys(MODULES).filter(m=>$(`#m_${id}_${m}`)?.checked);
+  c[role]={d,notes,mods:d==='repeat'?mods:[]};
+  const pending=['mentor','manager','hr'].filter(r=>!c[r]);
+  const t=trainees[id-1];
+  if(pending.length){toast(`Recorded. Waiting for ${pending.map(r=>r==='hr'?'HR':r).join(' and ')}.`);render();return}
+  const rep=[...new Set(['mentor','manager','hr'].flatMap(r=>c[r].mods))];
+  if(['mentor','manager','hr'].some(r=>c[r].d==='repeat')){
+    c.repeat=rep.length?rep:Object.keys(c.mods).filter(m=>c.mods[m]<70); t.status='remediation';
+    queueEmail('Refresher assigned',[`trainee${id}@bank.example`],'Refresher modules assigned');
+    toast(`All three coaches decided. ${t.name.split(' ')[0]} repeats ${c.repeat.join(', ')}.`);
+  } else {
+    t.status='phase2'; delete coaching[id];
+    queueEmail('Next phase unlocked',[`trainee${id}@bank.example`],'Next phase unlocked on coaches\' recommendation');
+    toast(`All three coaches passed ${t.name.split(' ')[0]}. Phase 2 unlocked.`);
+  }
+  render();
+}
+
+views.hr=()=>{
+  const coachingNow=trainees.filter(t=>t.status==='coaching').length;
+  const waves=4, perWave=1000/waves, failRate=coachingNow/1000;
+  const coachDays=Math.round(perWave*failRate);
+  const risky=trainees.slice().sort((a,b)=>b.risk-a.risk).slice(0,10);
+  return `
+  <div class="head"><div><span class="eyebrow">HR · Programme operations</span><h1>Programme health</h1><p class="sub">Escalations, coaching SLAs, attrition risk and every email the platform has sent. Five HR partners cover 200 trainees each.</p></div></div>
+  <div class="grid g4">
+    <div class="panel stat"><span class="eyebrow">Open escalations</span><span class="v">${coachingNow}</span><span class="d">SLA 3 working days</span></div>
+    <div class="panel stat"><span class="eyebrow">SLA breached</span><span class="v">7</span><span class="d">auto-escalated to HR + manager</span></div>
+    <div class="panel stat"><span class="eyebrow">Attempts exhausted</span><span class="v">0</span><span class="d">→ HR performance review</span></div>
+    <div class="panel stat"><span class="eyebrow">Pulse score</span><span class="v">3.9<span style="font-size:1rem" class="muted">/5</span></span><span class="d">confidence & belonging, Day 10</span></div>
+  </div>
+  <div class="callout warn"><b>Capacity check.</b> With all 1,000 in one cohort, ${coachingNow} trainees need coaching on the same days: about ${Math.round(coachingNow/20)} coaching days per mentor and per manager, and ${Math.round(coachingNow/5)} for each HR partner. Running four monthly waves of 250 brings this to about ${Math.round(coachDays/20)+1} days per mentor and keeps shadowing at roughly 12 trainees per mentor instead of 50. HR can delegate its session to a trained L&D coach where volumes require.</div>
+  <div class="grid g2">
+    <div class="panel"><h2>Highest attrition risk</h2><p class="muted" style="font-size:.8rem">Blends test gaps, coaching events, inactivity and pulse scores. Recomputed nightly.</p>
+      <div class="tscroll"><table><thead><tr><th>Trainee</th><th>Cluster</th><th>Status</th><th>Risk</th></tr></thead><tbody>${risky.map(t=>`<tr><td>${esc(t.name)}<br><span class="mono muted">${t.code}</span></td><td>${t.cluster}</td><td>${pill(t.status)}</td><td>${riskPill(t.risk)}</td></tr>`).join('')}</tbody></table></div>
+    </div>
+    <div class="panel"><h2>Email log</h2><p class="muted" style="font-size:.8rem">Sent from the notification outbox every two minutes. Scores never appear in subject lines.</p>
+      <div class="items" style="gap:8px">${outbox.slice(0,7).map(m=>`<div class="mail"><div class="row" style="justify-content:space-between"><b>${esc(m.tpl)}</b><span class="mono muted">${m.t}</span></div><span>${esc(m.sub)}</span><span class="to">To: ${m.to.map(esc).join(', ')}</span></div>`).join('')}</div>
+    </div>
+  </div>
+  ${coachView('hr').replace(/^[\s\S]*?<div class="grid g-main">/,'<div class="grid g-main">')}`;
+};
+
+views.design=()=>`
+  <div class="head"><div><span class="eyebrow">Programme rules</span><h1>How the 30 days work</h1><p class="sub">Every rule below is enforced in the database, so no screen or user can skip a gate.</p></div></div>
+  <div class="panel"><h2>The path</h2>
+    <div class="flow">
+      <div class="step"><span class="eyebrow">Days 1–14</span><span class="t">Foundation</span><small>Governance, People, Product, Process. Readable notes plus working files: KYC checklist, DP calculator, CAM template.</small></div>
+      <div class="step gate"><span class="eyebrow">Day 15 · Gate 1</span><span class="t">Pass mark 80%</span><small>Below 80%: email to Mentor, Reporting Manager and HR. One coaching day with each. Then pass or repeat named modules.</small></div>
+      <div class="step"><span class="eyebrow">Days 16–20</span><span class="t">Pricing & P&L</span><small>FTP, spreads, expected loss, RAROC, relationship P&L and wallet share, with a live Excel workbook.</small></div>
+      <div class="step gate"><span class="eyebrow">Day 21 · Gate 2</span><span class="t">Pass mark 75%</span><small>Below 75%: coaching day with Mentor and Reporting Manager. Then pass or repeat.</small></div>
+      <div class="step"><span class="eyebrow">Days 22–29</span><span class="t">Shadowing</span><small>Observe, co-lead, then lead with the mentor present. Daily logs use masked client references only.</small></div>
+      <div class="step gate"><span class="eyebrow">Day 30</span><span class="t">Certification</span><small>Final assessment (80%) and sign-off by Mentor, Reporting Manager and HR. Any rejection goes to HR review.</small></div>
+      <div class="step"><span class="eyebrow">Guardrail</span><span class="t">Two attempts per gate</span><small>A second miss moves the trainee to an HR performance review: extension, role change or exit.</small></div>
+      <div class="step"><span class="eyebrow">After Day 30</span><span class="t">60 / 90-day check-ins</span><small>Pulse surveys and portfolio review keep the attrition signal running after certification.</small></div>
+    </div>
+  </div>
+  <div class="grid g2">
+    <div class="panel"><h2>Gate decision flow</h2>
+<ol class="dflow">
+  <li><b>Submit assessment.</b> Graded on the server; module scores recorded.</li>
+  <li><b>At or above pass mark?</b> <span class="pill p-good">Yes</span> next phase unlocks. <span class="pill p-crit">No</span> continue.</li>
+  <li><b>Attempts left?</b> <span class="pill p-crit">No</span> HR performance review. <span class="pill p-good">Yes</span> continue.</li>
+  <li><b>Email coaches.</b> Mentor, Reporting Manager and HR at Gate 1; Mentor and Manager at Gate 2.</li>
+  <li><b>One coaching day per coach.</b> Each records notes and a decision within 3 working days.</li>
+  <li><b>Any coach asks for a repeat?</b> <span class="pill p-good">No</span> next phase unlocks. <span class="pill p-warn">Yes</span> named modules assigned.</li>
+  <li><b>Refresher complete.</b> The second attempt opens.</li>
+</ol>
+    </div>
+    <div class="panel"><h2>What was added for real-world use</h2>
+      <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px">
+        <li>Training days skip weekends and bank holidays; coaching days extend the calendar.</li>
+        <li>Randomised question sets, server-side grading and module-level scores for targeted remediation.</li>
+        <li>Coaching SLA of three working days with automatic escalation when missed.</li>
+        <li>Mandatory learning must be complete before a test opens.</li>
+        <li>No customer PII in shadow logs; the assistant masks PAN, Aadhaar and account numbers.</li>
+        <li>Maker-checker system access only after Gate 2.</li>
+        <li>Append-only audit log for every score, decision and sign-off.</li>
+        <li>Attrition-risk score and pulse surveys, visible to HR only.</li>
+        <li>Staggered monthly waves so mentors are not coaching 50 people at once.</li>
+      </ul>
+    </div>
+  </div>`;
+
+// ---------------- render & events ----------------
+let view='leadership';
+function render(){
+  $('#main').innerHTML=views[view]();
+  document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-current',b.dataset.v===view?'page':'false'));
+  if(view==='leadership')calcROI();
+  }
+document.getElementById('nav').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;view=b.dataset.v;try{history.replaceState(null,'','#'+view)}catch(_){}render();window.scrollTo(0,0)});
+document.getElementById('main').addEventListener('input',e=>{if(e.target.id?.startsWith('r_'))calcROI();if(e.target.dataset.q!==undefined){quizState.ans[e.target.dataset.q]=+e.target.dataset.o;const b=$('#submitQuiz');if(b)b.disabled=Object.keys(quizState.ans).length<BANK.length;const h=$('#assessPanel .panel-h .muted');if(h)h.textContent=Object.keys(quizState.ans).length+'/'+BANK.length+' answered'}});
+document.getElementById('main').addEventListener('click',e=>{
+  const t=e.target;
+  if(t.id==='startQuiz'){quizState={ans:{}};$('#assessPanel').innerHTML=assessHTML();return}
+  if(t.id==='failFast'){submitAttempt(70,{GOV:55,PPL:85,PRD:75,PRC:65});return}
+  if(t.id==='submitQuiz'){
+    const by={};let ok=0;BANK.forEach((q,i)=>{by[q.m]=by[q.m]||[0,0];by[q.m][1]++;if(quizState.ans[i]===q.a){ok++;by[q.m][0]++}});
+    const mods={};Object.keys(MODULES).forEach(m=>mods[m]=by[m]?Math.round(by[m][0]/by[m][1]*100):0);
+    submitAttempt(Math.round(ok/BANK.length*100),mods);return}
+  if(t.id==='finishRem'){ME.status='due';quizState=null;toast('Refresher complete. Attempt 2 of 2 is open.');render();return}
+  if(t.dataset.dec){decide(+t.dataset.t,t.dataset.r,t.dataset.dec);return}
+  const ck=t.closest('.check');if(ck){const k=ck.dataset.k;doneItems.has(k)?doneItems.delete(k):doneItems.add(k);render()}
+});
+
+// ---------------- Assistant ----------------
+const KB=`Programme: 30 training days. Days 1-14 Foundation (Governance, People, Product, Process). Day 15 Gate 1 pass 80%; below 80% emails Mentor, Reporting Manager and HR, one coaching day each, then pass or repeat named modules. Days 16-20 Pricing & P&L. Day 21 Gate 2 pass 75%; below that Mentor + Manager coach. Days 22-29 shadowing with mentor. Day 30 final assessment 80% + sign-off by Mentor, Manager, HR. Two attempts per gate; second miss -> HR review.
+Facts: CTR/STR filed with FIU-IND; STR within 7 working days. Company beneficial owner >10%. KYC refresh: high risk 2y, medium 8y, low 10y. SMA-0 1-30 days, SMA-1 31-60, SMA-2 61-90, NPA >90; CC out of order 90 days -> NPA. CERSAI within 30 days. RBI Integrated Ombudsman after 30 days unresolved.
+Formulas: Drawing power = (eligible stock + eligible receivables - creditors) x (1 - margin). NII = (yield - FTP) x balance. Expected loss = PD x LGD x EAD. Capital = exposure x risk weight x capital ratio (11.5%). RAROC = (income - opex - EL - tax) / capital. EBLR resets at least every 3 months. DSCR = (PAT + depreciation + interest on TL) / (interest + principal).`;
+const chat=[]; let samplerP=null;
+function addMsg(r,t){chat.push({role:r,content:t});const d=document.createElement('div');d.className='msg '+(r==='user'?'u':'a');d.textContent=t;$('#msgs').appendChild(d);$('#msgs').scrollTop=1e9;return d}
+function fallback(q){q=q.toLowerCase();
+  if(q.includes('drawing'))return 'Drawing power = (eligible stock + eligible receivables − trade creditors) × (1 − margin).\nExample: (100 + 60 − 40) × 0.75 = ₹90 Cr. You can draw the lower of the limit and DP.\nSource: Day 6, Working capital.';
+  if(q.includes('raroc')||q.includes('expected loss'))return 'Expected loss = PD × LGD × EAD. RAROC = (income − operating cost − expected loss − tax) ÷ allocated capital, where capital = exposure × risk weight × 11.5%.\nSource: Day 17, RAROC.';
+  if(q.includes('fail')||q.includes('80'))return 'If you score below 80% on Day 15, your Mentor, Reporting Manager and HR partner are emailed and each holds a one-day coaching session. They then pass you or assign specific modules to repeat before your second attempt.';
+  if(q.includes('kyc'))return 'Periodic KYC: high-risk customers every 2 years, medium every 8, low every 10. For a company, anyone owning more than 10% is a beneficial owner.\nSource: Day 2, Regulatory map.';
+  return 'I can help with programme rules, KYC and AML, products, drawing power, pricing and RAROC. The live assistant is not available in this view, so these are stored answers.'}
+async function ask(q){
+  addMsg('user',q); const el=addMsg('assistant','Thinking…'); $('#chatSend').disabled=true;
+  const redacted=q.replace(/\b[A-Z]{5}[0-9]{4}[A-Z]\b/g,'[PAN]').replace(/\b\d{4}\s?\d{4}\s?\d{4}\b/g,'[AADHAAR]');
+  try{
+    const sample=await (samplerP||(samplerP=window.claude?.use?window.claude.use('sample'):Promise.resolve(null)));
+    if(!sample)throw {code:'unavailable'};
+    const turns=chat.slice(0,-1).slice(-8).map(m=>({role:m.role,content:m.content}));
+    turns[turns.length-1]={role:'user',content:`You are the RM Onboarding Academy assistant for a large Indian private-sector corporate bank. Answer the trainee briefly and professionally using ONLY this knowledge; show formula, working and answer for calculations; never give assessment answers; refuse to handle customer personal data; for policy exceptions point to mentor/manager/HR. End with "Source: Day N, topic" when possible.\nKNOWLEDGE:\n${KB}\nTRAINEE: ${ME.name}, Day ${TODAY_DAY}, status ${ME.status}${ME.g1?', Gate 1 score '+ME.g1+'%':''}.\nQUESTION: ${redacted}`};
+    const r=await sample(turns,{modelTier:'quick',cache:false,onText:({text})=>{el.textContent=text}});
+    el.textContent=r.text; chat[chat.length-1].content=r.text;
+  }catch(e){const t=fallback(q);el.textContent=t;chat[chat.length-1].content=t}
+  $('#chatSend').disabled=false;
+}
+const CHIPS=['What happens if I score below 80%?','Explain drawing power with an example','How is RAROC calculated?','When is KYC refresh due for high-risk clients?'];
+$('#chips').innerHTML=CHIPS.map(c=>`<button class="chip" type="button">${c}</button>`).join('');
+$('#chips').addEventListener('click',e=>{if(e.target.classList.contains('chip'))ask(e.target.textContent)});
+$('#fab').onclick=()=>{const d=$('#drawer');d.hidden=!d.hidden;if(!d.hidden&&!chat.length)addMsg('assistant',`Hi ${ME.name.split(' ')[0]}. I can explain any topic from your 30 days, work through calculations and tell you what comes next. Please never paste client names, PAN or account numbers.`);if(!d.hidden)$('#chatInput').focus()};
+$('#closeChat').onclick=()=>$('#drawer').hidden=true;
+$('#chatForm').addEventListener('submit',e=>{e.preventDefault();const v=$('#chatInput').value.trim();if(!v)return;$('#chatInput').value='';ask(v)});
+
+const h=(location.hash||'').slice(1); if(views[h])view=h;
+render();
+</script>
