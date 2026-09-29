@@ -102,6 +102,8 @@ Then enable `pg_cron` and `pg_net` in the dashboard and run the two `cron.schedu
 
 See **docs/BUILD_PATHWAY.md** for the full 10-week plan.
 
+To rebuild this project, or start a similar one, use the master prompt in **docs/MASTER_PROMPT.md**.
+
 ## Tested
 
 The gating engine was run end to end on Postgres 16: fail Gate 1 → three coaching sessions + emails queued → HR requests repeat → remediation → retake passes → Gate 2 → Final → three sign-offs → certified; coach-pass path; Gate 2 escalates to two coaches only; blocked when mandatory learning is open; mentor cannot sign off without a Day-30 viva.
