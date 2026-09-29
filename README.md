@@ -37,11 +37,26 @@ supabase/
     chatbot/                RAG assistant (Claude or any OpenAI-compatible model, incl. on-prem Llama)
     daily-scheduler/        nightly risk scores, SLA breaches, inactivity nudges
 content/                    readable notes per day + working files (KYC checklist, pricing & P&L workbook)
-web/index.html              clickable prototype (all five roles + assistant) – demo data
+web/src/app.template.html   the app (four interfaces + chatbot); build with scripts/build_prototype.py
+web/index.html              built app with the /content curriculum embedded – demo data
+web/supabase-client.js      the calls that replace demo data with live Supabase data
 design-system/              tokens.json, components.css, README (the design system)
 docs/                       build pathway, business case, real-world additions
 scripts/                    question seed builder, knowledge-base ingestion
 ```
+
+## The app: four interfaces
+
+| Interface | Menu | What they do |
+|---|---|---|
+| **New Joinee** | My day · Training programme · Assessments · Shadow log · Ask the Academy | Reads the day's notes, uses working files and calculators, takes the three gated tests, logs shadow interactions, asks the chatbot |
+| **Mentor** | My trainees · Coaching & checks · Shadow reviews · Day-30 sign-off | Coaching day at Gate 1 and 2, verifies held results, rates shadow logs, runs the Day-30 viva and signs |
+| **Reporting Boss** | My team · Coaching · Day-30 sign-off | Coaching day at Gate 1 and 2, signs Day 30 |
+| **HR** | Programme health · Coaching & reviews · Test integrity · People & capacity · Email log · Day-30 sign-off | Coaching day at Gate 1 and Day 30, decides after two failed attempts, watches attrition risk and capacity, signs Day 30 |
+
+The chatbot is available in all four interfaces and answers from `/content`. In production each person signs in with SSO and sees only their own interface (`profiles.role`: `trainee`, `mentor`, `reporting_manager` = Reporting Boss, `hr`). There is no business-case screen; the numbers in `docs/BUSINESS_CASE.md` are for planning only.
+
+After editing anything in `/content`, rebuild the app so trainees see the change: `python3 scripts/build_prototype.py`.
 
 ## Run it locally (about 30 minutes)
 

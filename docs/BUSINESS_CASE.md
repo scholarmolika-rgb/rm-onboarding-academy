@@ -1,5 +1,7 @@
 # Business case — for the Head of Corporate Banking
 
+> Planning reference only. It is not a screen in the app; it explains the data points and people the programme needs.
+
 ## The problem
 Private banks lose a large share of newly hired Relationship Managers in their first year. Each exit costs the bank three times:
 1. **Hiring cost** — recruiter fees, interview time, notice-period gap, re-onboarding.
