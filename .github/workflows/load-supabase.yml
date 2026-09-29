@@ -1,0 +1,41 @@
+# One-click loader: sets up the tables and uploads the CSV files into YOUR Supabase project.
+# Runs only when you click "Run workflow" (Actions tab → "Load data into Supabase").
+# Needs one repository secret: SUPABASE_DB_URL (see docs/SUPABASE_SETUP_GUIDE.md, "Automatic upload").
+name: Load data into Supabase
+
+on:
+  workflow_dispatch:
+    inputs:
+      include_demo_joinees:
+        description: "Also load the 24 demo joinees (choose false for a real cohort)"
+        type: boolean
+        default: false
+
+concurrency: load-supabase   # never two loads at the same time
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the secret is set
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::Add the repository secret SUPABASE_DB_URL first (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+
+      - name: Install the Postgres client
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+
+      - name: Build the question file
+        run: python3 scripts/build_question_seed.py
+
+      - name: Apply migrations and upload CSVs
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          INCLUDE_DEMO_JOINEES: ${{ inputs.include_demo_joinees }}
+        run: bash scripts/load_supabase.sh

@@ -1,6 +1,6 @@
 # Supabase setup: CSV upload and saving every UI change
 
-This guide takes you from an empty Supabase project to a live Academy where every change made in the app (a joinee added, a login issued, a lesson completed, a coaching decision, a sign-off) is saved in Supabase. It has five parts:
+This guide takes you from an empty Supabase project to a live Academy where every change made in the app (a joinee added, a login issued, a lesson completed, a coaching decision, a sign-off) is saved in Supabase. It has five parts, plus a fastest route that does Parts 1–2 for you from GitHub:
 
 1. Create the project and the tables
 2. Upload the CSV files
@@ -9,6 +9,51 @@ This guide takes you from an empty Supabase project to a live Academy where ever
 5. Check that changes are being saved
 
 Everything referred to below is in the GitHub repository `scholarmolika-rgb/rm-onboarding-academy`.
+
+---
+
+## Fastest route: automatic upload from GitHub (about 5 minutes)
+
+Instead of Steps 3–5 below, GitHub can set up the tables and upload every CSV for you. You only do Steps 1–2 (create the project, switch sign-up off, turn on extensions), then:
+
+**A. Copy your database connection string**
+1. In Supabase, click **Connect** (top of the project page).
+2. Choose **Session pooler** (not "Direct connection"; GitHub's servers need the pooler).
+3. Copy the URI. It looks like
+   `postgresql://postgres.<project-ref>:[YOUR-PASSWORD]@aws-0-ap-south-1.pooler.supabase.com:5432/postgres`
+4. Replace `[YOUR-PASSWORD]` with your database password. If the password contains `@`, `#`, `/` or `:`, reset it in **Project Settings → Database** to one with letters and numbers only, or the address will not work.
+
+**B. Save it as a secret in GitHub** (it is never shown in logs or files)
+1. Open github.com/scholarmolika-rgb/rm-onboarding-academy → **Settings → Secrets and variables → Actions**.
+2. **New repository secret**. Name: `SUPABASE_DB_URL`. Value: the URI from A. **Add secret**.
+
+**C. Run the loader**
+1. Open the **Actions** tab → **Load data into Supabase** (left list) → **Run workflow**.
+2. "Also load the 24 demo joinees": tick for a demo project, leave unticked for a real cohort.
+3. Click **Run workflow**. After about a minute the run shows a green tick. Open it to see the log:
+   - `apply 2026…_schema` … `apply 2026…_state_store`: the eight migrations;
+   - `01_cohorts.csv -> cohorts` … `09_profiles_mentors.csv -> profiles`: the uploads;
+   - the checks, all `ok`;
+   - a summary: 5 HR, 20 Reporting Bosses, 20 Mentors, and seats used and free.
+
+**Safe to run again.** Migrations already applied are skipped, and if the data is already there nothing is uploaded twice. If a run stops half way (for example a wrong password), fix the cause and run it again: it continues from where it stopped. Migrations are recorded in Supabase's own migration table, so the Supabase CLI treats them as applied too.
+
+**If the run fails**
+
+| Log says | Fix |
+|---|---|
+| `Add the repository secret SUPABASE_DB_URL first` | do step B |
+| `password authentication failed` | wrong password in the secret; update the secret |
+| `could not translate host name` or `Network is unreachable` | you copied "Direct connection"; use the **Session pooler** URI |
+| `extension "vector" is not available` | turn on **vector** under Database → Extensions (Step 2) |
+| anything in the CSV table in Part 2 | see that table |
+
+Then continue with **Part 3** (first logins).
+
+The same loader runs from your own computer if you prefer:
+```bash
+SUPABASE_DB_URL="<session pooler URI>" INCLUDE_DEMO_JOINEES=false bash scripts/load_supabase.sh
+```
 
 ---
 

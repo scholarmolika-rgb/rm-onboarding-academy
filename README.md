@@ -107,7 +107,7 @@ See **docs/BUILD_PATHWAY.md** for the full 10-week plan.
 
 To rebuild this project, or start a similar one, use the master prompt in **docs/MASTER_PROMPT.md**.
 
-To set up Supabase without the command line (CSV uploads in `supabase/csv/`) and connect the app so every change is saved, follow **docs/SUPABASE_SETUP_GUIDE.md**.
+To set up Supabase without the command line (CSV uploads in `supabase/csv/`) and connect the app so every change is saved, follow **docs/SUPABASE_SETUP_GUIDE.md**. To load everything automatically, add the `SUPABASE_DB_URL` secret and run the **Load data into Supabase** action.
 
 ## Tested
 

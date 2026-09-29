@@ -3,6 +3,11 @@
 -- Needs the migrations applied first (supabase db push); departments come from migration 006.
 -- Run once on an empty project.
 \set ON_ERROR_STOP on
+-- demo joinees are optional: psql -v include_demo=true ... (default false)
+\if :{?include_demo}
+\else
+\set include_demo false
+\endif
 begin;
 \echo 01_cohorts.csv -> cohorts
 \copy cohorts(id, name, start_date, holidays, capacity) from 'supabase/csv/01_cohorts.csv' with (format csv, header true)
@@ -22,7 +27,11 @@ begin;
 \copy profiles(id, employee_code, full_name, email, phone, role, region, department, designation, experience_months, previous_employer, previous_role, start_date, joined_on, cohort_id, mentor_id, manager_id, hr_id, max_trainees, is_active) from 'supabase/csv/08_profiles_reporting_bosses.csv' with (format csv, header true)
 \echo 09_profiles_mentors.csv -> profiles
 \copy profiles(id, employee_code, full_name, email, phone, role, region, department, designation, experience_months, previous_employer, previous_role, start_date, joined_on, cohort_id, mentor_id, manager_id, hr_id, max_trainees, is_active) from 'supabase/csv/09_profiles_mentors.csv' with (format csv, header true)
+\if :include_demo
 \echo 10_profiles_joinees_demo.csv -> profiles
 \copy profiles(id, employee_code, full_name, email, phone, role, region, department, designation, experience_months, previous_employer, previous_role, start_date, joined_on, cohort_id, mentor_id, manager_id, hr_id, max_trainees, is_active) from 'supabase/csv/10_profiles_joinees_demo.csv' with (format csv, header true)
+\else
+\echo 10_profiles_joinees_demo.csv skipped (include_demo=false)
+\endif
 \i supabase/csv/after_import.sql
 commit;
